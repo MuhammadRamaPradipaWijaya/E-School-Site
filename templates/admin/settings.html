@@ -1,0 +1,198 @@
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+    <!-- Page Header -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+      <h4 class="page-title mb-0">Pengaturan Admin</h4>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Beranda</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Pengaturan</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- Flash messages -->
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        {% for cat,msg in msgs %}
+          <div class="alert alert-{{ cat }} alert-dismissible fade show">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Nav tabs (Tampilan Disamakan) -->
+    <ul class="nav nav-tabs mb-4" id="settingsTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-profile-tab" data-bs-toggle="tab" data-bs-target="#tab-profile"
+          type="button" role="tab" aria-controls="tab-profile" aria-selected="true">
+          <i class="ti ti-user me-1"></i> Profil Pengguna
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-security-tab" data-bs-toggle="tab" data-bs-target="#tab-security"
+          type="button" role="tab" aria-controls="tab-security" aria-selected="false">
+          <i class="ti ti-lock me-1"></i> Keamanan & Kata Sandi
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+
+      <!-- PROFILE TAB -->
+      <div class="tab-pane fade show active" id="tab-profile">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Profil Pengguna</h5>
+              </div>
+              <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                  <input type="hidden" name="form_type" value="profile">
+
+                  <!-- Username & Full Name -->
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Nama Pengguna</label>
+                      <input type="text"
+                             name="username"
+                             class="form-control"
+                             value="{{ admin.username }}"
+                             required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Nama Lengkap</label>
+                      <input type="text"
+                             name="name"
+                             class="form-control"
+                             value="{{ admin.name }}"
+                             required>
+                    </div>
+                  </div>
+
+                  <!-- Email -->
+                  <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email"
+                           name="email"
+                           class="form-control"
+                           value="{{ admin.email }}"
+                           required>
+                  </div>
+
+                  <!-- Avatar -->
+                  <div class="mb-3">
+                    <label class="form-label">Foto</label>
+                    {% if admin.avatar %}
+                      <div class="mb-2 text-center">
+                        <img src="{{ url_for('static', filename='images/avatars/' + admin.avatar) }}"
+                             class="rounded-circle"
+                             width="80">
+                      </div>
+                    {% endif %}
+                    <input type="file"
+                           name="avatar"
+                           class="form-control"
+                           accept=".png,.jpg,.jpeg,.gif">
+                    <div class="form-text">Biarkan kosong jika tidak ingin mengganti foto.</div>
+                  </div>
+
+                  <div class="text-end">
+                    <button class="btn btn-primary"><i class="ti ti-device-floppy"></i> Simpan</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECURITY & PASSWORD TAB -->
+      <div class="tab-pane fade" id="tab-security">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Keamanan & Kata Sandi</h5>
+              </div>
+              <div class="card-body">
+                <form method="POST">
+                  <input type="hidden" name="form_type" value="security">
+
+                  <div class="mb-3">
+                    <label class="form-label">Kata Sandi Saat Ini</label>
+                    <input type="password"
+                           name="current_password"
+                           class="form-control"
+                           required>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Kata Sandi Baru</label>
+                      <input type="password"
+                             name="new_password"
+                             class="form-control"
+                             required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Ulang Kata Sandi Baru</label>
+                      <input type="password"
+                             name="confirm_password"
+                             class="form-control"
+                             required>
+                    </div>
+                  </div>
+
+                  <div class="text-end">
+                    <button class="btn btn-warning"><i class="ti ti-refresh"></i> Perbarui</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.tab-content -->
+
+  </div><!-- /.pc-content --> 
+
+</div><!-- /.pc-container -->
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Ambil tab terakhir yang disimpan dari localStorage
+    const lastTab = localStorage.getItem("activeTab");
+    if (lastTab) {
+      const tabTrigger = document.querySelector(`[data-bs-target="${lastTab}"]`);
+      if (tabTrigger) {
+        const tab = new bootstrap.Tab(tabTrigger);
+        tab.show();
+      }
+    }
+
+    // Simpan tab aktif saat user klik
+    const tabLinks = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabLinks.forEach(link => {
+      link.addEventListener("shown.bs.tab", function (e) {
+        const targetSelector = e.target.getAttribute("data-bs-target") || e.target.getAttribute("href");
+        if (targetSelector) {
+          localStorage.setItem("activeTab", targetSelector);
+        }
+      });
+    });
+  });
+</script>
+
+
+{% include "admin/components/footer.html" %}

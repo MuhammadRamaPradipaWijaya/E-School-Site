@@ -1,0 +1,304 @@
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+
+    <!-- Page Header -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+      <h4 class="page-title mb-0">Manajemen Admin</h4>
+      <button class="btn btn-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#addAdminModal">
+        <i class="ti ti-plus"></i> Tambah Admin
+      </button>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Baranda</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Admin</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- flash -->
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        {% for c,m in msgs %}
+          <div class="alert alert-{{ c }} alert-dismissible fade show">
+            {{ m }}
+            <button class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- table -->
+    <div class="card">
+      <div class="card-body table-responsive">
+        <form method="get" class="mb-3 d-flex justify-content-end">
+          <input type="text" name="search" class="form-control w-auto me-2" placeholder="Cari nama pengguna, nama lengkap, atau email..." value="{{ search_query }}">
+          <button class="btn btn-outline-primary" type="submit">
+            <i class="ti ti-search"></i> Cari
+          </button>
+        </form>
+        <table class="table table-bordered align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Nama Pengguna</th>
+              <th>Nama Lengkap</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th style="width:160px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if admins_page %}
+              {% for adm in admins_page %}
+                <tr>
+                  <td>{{ adm.username }}</td>
+                  <td>{{ adm.name }}</td>
+                  <td>{{ adm.email }}</td>
+                  <td>
+                    {% if adm.is_blocked %}
+                      <span class="badge bg-danger">Blokir</span>
+                    {% else %}
+                      <span class="badge bg-success">Aktif</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <button class="btn btn-info btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewAdminModal{{ adm._id }}">
+                      <i class="ti ti-eye"></i>
+                    </button>
+
+                    <button class="btn btn-warning btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editAdminModal{{ adm._id }}">
+                      <i class="ti ti-edit"></i>
+                    </button>
+
+                    <button class="btn btn-secondary btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#blockAdminModal{{ adm._id }}">
+                      {% if adm.is_blocked %}
+                        <i class="ti ti-lock-open"></i>
+                      {% else %}
+                        <i class="ti ti-lock"></i>
+                      {% endif %}
+                    </button>
+
+                    <button class="btn btn-danger btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteAdminModal{{ adm._id }}">
+                      <i class="ti ti-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <!-- ========== VIEW ADMIN MODAL ========== -->
+                <div class="modal fade" id="viewAdminModal{{ adm._id }}" tabindex="-1">
+                  <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Detail Admin</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body text-center">
+                        <img src="{{ url_for('static', filename='images/avatars/' + adm.avatar) }}" class="rounded-circle mb-3" width="80">
+                        <p><strong>Nama Pengguna:</strong> {{ adm.username }}</p>
+                        <p><strong>Nama Lengkap:</strong> {{ adm.name }}</p>
+                        <p><strong>Email:</strong> {{ adm.email }}</p>
+                        <p><strong>Status:</strong> 
+                          {% if adm.is_blocked %}
+                            <span class="badge bg-danger">Blokir</span>
+                          {% else %}
+                            <span class="badge bg-success">Aktif</span>
+                          {% endif %}
+                        </p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ========== EDIT ADMIN MODAL ========== -->
+                <div class="modal fade" id="editAdminModal{{ adm._id }}" tabindex="-1">
+                  <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                      <form method="POST" action="{{ url_for('edit_admin', admin_id=adm._id) }}">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Edit Admin</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="mb-3">
+                            <label class="form-label">Nama Lengkap</label>
+                            <input type="text" name="name" value="{{ adm.name }}" class="form-control" required>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" value="{{ adm.email }}" class="form-control" required>
+                          </div>
+                          <input type="hidden" name="role" value="{{ adm.role }}">
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                          <button class="btn btn-warning"><i class="ti ti-pencil"></i> Perbarui</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ========== BLOCK/UNBLOCK ADMIN MODAL ========== -->
+                <div class="modal fade" id="blockAdminModal{{ adm._id }}" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <form method="POST" action="{{ url_for('block_admin', admin_id=adm._id) }}">
+                        <div class="modal-header">
+                          <h5 class="modal-title">
+                            {% if adm.is_blocked %}Buka Blokir{% else %}Blokir{% endif %} Admin
+                          </h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          Apakah Anda yakin ingin 
+                          {% if adm.is_blocked %}membuka blokir{% else %}memblokir{% endif %}
+                          admin <strong>{{ adm.username }}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                          <button class="btn btn-secondary">
+                            {% if adm.is_blocked %}
+                              <i class="ti ti-lock-open"></i> Buka Blokir
+                            {% else %}
+                              <i class="ti ti-lock"></i> Blokir
+                            {% endif %}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ========== DELETE ADMIN MODAL ========== -->
+                <div class="modal fade" id="deleteAdminModal{{ adm._id }}" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <form method="POST" action="{{ url_for('delete_admin', admin_id=adm._id) }}">
+                        <div class="modal-header text-danger">
+                          <h5 class="modal-title">Hapus Admin</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          Apakah Anda yakin ingin menghapus admin <strong>{{ adm.username }}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                          <button class="btn btn-danger"><i class="ti ti-trash"></i> Hapus</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="7" class="text-center">Tidak ada admin yang ditemukan.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        <nav aria-label="Admins pagination">
+          <ul class="pagination justify-content-center mt-3">
+            {% if page > 1 %}
+              <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_list', page=page-1, search=search) }}">&laquo;</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+              <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('admin_list', page=p, search=search) }}">{{ p }}</a>
+              </li>
+            {% endfor %}
+
+            {% if page < total_pages %}
+              <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_list', page=page+1, search=search) }}">&raquo;</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+
+      </div>
+    </div>
+
+    <!-- ========== ADD ADMIN MODAL ============= -->
+    <div class="modal fade" id="addAdminModal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <form method="POST"
+                action="{{ url_for('add_admin') }}"
+                enctype="multipart/form-data">
+            <div class="modal-header">
+              <h5 class="modal-title">Tambah Admin Baru</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+              <div class="mb-3">
+                <label class="form-label">Nama Pengguna</label>
+                <input name="username" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Nama Lengkap</label>
+                <input name="name" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Kata Sandi</label>
+                <input type="password" name="password" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Foto</label>
+                <input type="file" name="avatar" class="form-control"
+                       accept=".png,.jpg,.jpeg,.gif">
+              </div>
+
+              <!-- role otomatis -->
+              <input type="hidden" name="role" value="admin">
+            </div>
+
+            <div class="modal-footer">
+              <button type="button"
+                                  class="btn btn-secondary"
+                                  data-bs-dismiss="modal">Batal</button>
+              <button class="btn btn-primary">Simpan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% include "admin/components/footer.html" %}

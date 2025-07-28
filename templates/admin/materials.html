@@ -1,0 +1,1313 @@
+{# templates/admin/materials.html #}
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+
+    <!-- Page Header -->
+    <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-4">
+      <h4 class="page-title mb-0">Manajemen E-Learning</h4>
+
+      <div class="d-flex flex-grow-1 justify-content-center mt-2 mt-md-0">
+        <div class="btn-group">
+          <button class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#addClassModal">
+            <i class="ti ti-plus"></i> Tambah Kelas
+          </button>
+          <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+            <i class="ti ti-plus"></i> Tambah Mapel
+          </button>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMaterialModal">
+            <i class="ti ti-plus"></i> Tambah Materi
+          </button>
+        </div>
+      </div>
+
+      <nav aria-label="breadcrumb" class="mt-2 mt-md-0">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Beranda</a></li>
+          <li class="breadcrumb-item active" aria-current="page">E-Learning</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        {% for c,m in msgs %}
+          <div class="alert alert-{{ c }} alert-dismissible fade show">
+            {{ m }}<button class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const allSubjects = {{ subjects|tojson }};
+      
+      function populateSubjects(classId, subjectSelect) {
+        subjectSelect.innerHTML = '<option disabled selected>Select subject</option>';
+        allSubjects.forEach(subject => {
+          if (subject.class_id === classId) {
+            subjectSelect.innerHTML += `<option value="${subject._id}">${subject.title}</option>`;
+          }
+        });
+      }
+
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('show.bs.modal', () => {
+          const classSelect = modal.querySelector('select[name="class_id"]');
+          const subjectSelect = modal.querySelector('select[name="subject_id"]');
+          if (!classSelect || !subjectSelect) return;
+
+          populateSubjects(classSelect.value, subjectSelect);
+          subjectSelect.value = subjectSelect.dataset.current || '';
+
+          classSelect.addEventListener('change', () => {
+            populateSubjects(classSelect.value, subjectSelect);
+          });
+        });
+      });
+    });
+    </script>
+
+
+    <!-- Navigasi Tab E-Learning -->
+    <ul class="nav nav-tabs mb-4" id="elearningTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="classes-subjects-tab" data-bs-toggle="tab" data-bs-target="#classes-subjects"
+          type="button" role="tab" aria-controls="classes-subjects" aria-selected="false">
+          <i class="ti ti-layout-grid me-1"></i> Kelas & Mapel
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="materials-tab" data-bs-toggle="tab" data-bs-target="#materials"
+          type="button" role="tab" aria-controls="materials" aria-selected="true">
+          <i class="ti ti-file-text me-1"></i> Materi
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="materials">
+        {# Tabel Materi #}
+        <div class="card">
+          <div class="card-header"><strong>Materi</strong></div>
+          <div class="card-body table-responsive">
+            <form method="get" class="mb-3 d-flex justify-content-end">
+              <input type="text" name="search" class="form-control w-auto me-2"
+                    placeholder="Cari materi..." value="{{ request.args.get('search', '') }}">
+              <button class="btn btn-outline-primary" type="submit">
+                <i class="ti ti-search"></i> Cari
+              </button>
+            </form>
+            <table class="table table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>No.</th><th>Judul</th><th>Mapel</th><th>Kelas</th><th>Tipe</th><th>Diunggah</th><th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if materials %}
+                  {% for m in materials %}
+                    <tr>
+                      <td>{{ loop.index }}</td>
+                      <td class="text-truncate" style="max-width:250px;">{{ m.title }}</td>
+                      <td>{{ m.subject }}</td>
+                      <td>{{ m.class_name }}</td>
+                      <td>
+                        {% if (m.filenames and m.filenames|length > 0) or m.filename %}
+                          <span class="badge bg-info">Dokumen</span>
+                        {% endif %}
+                        {% if m.video_link %}
+                          <span class="badge bg-warning">Video</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ m.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                      <td>
+                        <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewMaterial-{{ m._id }}"><i class="ti ti-eye"></i></button>
+                        <button class="btn btn-sm btn-warning me-1" data-bs-toggle="modal" data-bs-target="#editMaterial-{{ m._id }}"><i class="ti ti-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#delMaterial-{{ m._id }}"><i class="ti ti-trash"></i></button>
+                      </td>
+                    </tr>
+
+                  <!-- View Material -->
+                  <div class="modal fade" id="viewMaterial-{{ m._id }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">{{ m.title }}</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <p>
+                            <strong>Deskripsi:</strong><br>
+                            {% if m.description %}
+                              {{ m.description
+                                | replace('\r\n','\n')
+                                | replace('\n','<br>')
+                                | safe
+                              }}
+                            {% else %}
+                              -
+                            {% endif %}
+                          </p>
+                          <p><strong>Mapel:</strong> {{ m.subject }}</p>
+                          <p><strong>Kelas:</strong> {{ m.class_name }}</p>
+                          <p><strong>Diunggah:</strong> {{ m.created_at.strftime('%d %b %Y %H:%M') }}</p>
+
+                          {% if m.filenames or m.video_link %}
+                          <h6 class="mt-4">Sumber Daya:</h6>
+                          <ul class="list-group mb-3">
+                            {# Loop file lokal #}
+                            {% for fn in m.filenames %}
+                              {% set ext = fn.rsplit('.',1)[1].lower() %}
+                              <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ fn }}
+                                {% if ext == 'pdf' %}
+                                  <button class="btn btn-sm btn-outline-primary"
+                                          data-bs-toggle="collapse"
+                                          data-bs-target="#fileCollapse-{{ loop.index }}-{{ m._id }}">
+                                    <i class="fa fa-file-pdf me-1"></i> Lihat
+                                  </button>
+                                {% elif ext == 'mp4' %}
+                                  <button class="btn btn-sm btn-outline-success"
+                                          data-bs-toggle="collapse"
+                                          data-bs-target="#fileCollapse-{{ loop.index }}-{{ m._id }}">
+                                    <i class="fa fa-play me-1"></i> Putar
+                                  </button>
+                                {% else %}
+                                  <a href="{{ url_for('static', filename='images/materials/' + fn) }}"
+                                    target="_blank"
+                                    class="btn btn-sm btn-outline-secondary">
+                                    <i class="fa fa-download me-1"></i> Unduh
+                                  </a>
+                                {% endif %}
+                              </li>
+                              {% if ext in ['pdf','mp4'] %}
+                                <div class="collapse mb-3" id="fileCollapse-{{ loop.index }}-{{ m._id }}">
+                                  {% if ext == 'pdf' %}
+                                    <div class="ratio ratio-4x3 border rounded">
+                                      <iframe src="{{ url_for('static', filename='images/materials/' + fn) }}"
+                                              class="w-100 h-100" style="border:0;"></iframe>
+                                    </div>
+                                  {% else %}
+                                    <video controls class="w-100 rounded">
+                                      <source src="{{ url_for('static', filename='images/materials/' + fn) }}"
+                                              type="video/mp4">
+                                    </video>
+                                  {% endif %}
+                                </div>
+                              {% endif %}
+                            {% endfor %}
+
+                            {# External video link #}
+                            {% if m.video_link %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                              External Video
+                              <button class="btn btn-sm btn-outline-danger"
+                                      data-bs-toggle="collapse"
+                                      data-bs-target="#linkCollapse-{{ m._id }}">
+                                <i class="fa fa-link me-1"></i> Tampilkan
+                              </button>
+                            </li>
+                            <div class="collapse mb-3" id="linkCollapse-{{ m._id }}">
+                              <div class="ratio ratio-16x9 border rounded">
+                                <iframe src="{{ m.video_link }}" allowfullscreen></iframe>
+                              </div>
+                            </div>
+                            {% endif %}
+                          </ul>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                    <!-- Edit Material Modal -->
+                    <div class="modal fade" id="editMaterial-{{ m._id }}" tabindex="-1">
+                      <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                          <form method="POST"
+                                action="{{ url_for('edit_material', material_id=m._id) }}"
+                                enctype="multipart/form-data">
+                            <div class="modal-header">
+                              <h5 class="modal-title">Edit Materi</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                              <!-- Class & Subject -->
+                              <div class="row">
+                                <div class="col-md-6 mb-3">
+                                  <label class="form-label">Kelas</label>
+                                  <select class="form-select" name="class_id" required>
+                                    {% for c in classes %}
+                                    <option value="{{ c._id }}"
+                                            {% if c._id == m.class_id %}selected{% endif %}>
+                                      {{ c.title }}
+                                    </option>
+                                    {% endfor %}
+                                  </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                  <label class="form-label">Mapel</label>
+                                  <select class="form-select" name="subject_id" required>
+                                    {% for s in subjects if s.class_id == m.class_id %}
+                                    <option value="{{ s._id }}"
+                                            {% if s._id == m.subject_id %}selected{% endif %}>
+                                      {{ s.title }}
+                                    </option>
+                                    {% endfor %}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <!-- Title & Description -->
+                              <div class="mb-3">
+                                <label class="form-label">Judul</label>
+                                <input class="form-control"
+                                      name="title"
+                                      value="{{ m.title }}"
+                                      required>
+                              </div>
+                              
+                              <div class="mb-3">
+                                <label class="form-label">Deskripsi</label>
+                                <div class="btn-toolbar mb-2" role="toolbar" aria-label="Formatting toolbar">
+                                  <div class="btn-group me-1" role="group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','editDescEditable-{{ m._id }}')"><i class="ti ti-bold"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','editDescEditable-{{ m._id }}')"><i class="ti ti-italic"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','editDescEditable-{{ m._id }}')"><i class="ti ti-underline"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','editDescEditable-{{ m._id }}')"><i class="ti ti-strikethrough"></i></button>
+                                  </div>
+                                  <div class="btn-group me-1" role="group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','editDescEditable-{{ m._id }}')"><i class="ti ti-align-left"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','editDescEditable-{{ m._id }}')"><i class="ti ti-align-center"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','editDescEditable-{{ m._id }}')"><i class="ti ti-align-right"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','editDescEditable-{{ m._id }}')"><i class="ti ti-align-justified"></i></button>
+                                  </div>
+                                  <div class="btn-group me-1">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editDescEditable-{{ m._id }}','insertUnorderedList')"><i class="ti ti-list"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editDescEditable-{{ m._id }}','insertOrderedList')"><i class="ti ti-list-numbers"></i></button>
+                                  </div>
+                                  <div class="btn-group me-1">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editDescEditable-{{ m._id }}','createLink', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editDescEditable-{{ m._id }}','insertImage', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+                                  </div>
+                                  <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editDescEditable-{{ m._id }}','1')"><small>A</small></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editDescEditable-{{ m._id }}','3')"><span>A</span></button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editDescEditable-{{ m._id }}','5')"><strong>A</strong></button>
+                                  </div>
+                                </div>
+
+                                <div id="editDescEditable-{{ m._id }}" contenteditable="true" class="border rounded p-2" style="height: 150px; background-color: #fff; overflow-y: auto;">
+                                  {{ m.description|safe }}
+                                </div>
+                                <textarea name="description" id="editDescInput-{{ m._id }}" hidden></textarea>
+                              </div>
+
+                              <!-- Current Resources (files + external video) -->
+                              {% if m.filenames or m.video_link %}
+                              <label class="form-label">Sumber Daya</label>
+                              <ul class="list-group mb-3">
+                                {# Local files #}
+                                {% for fn in m.filenames %}
+                                  {% set ext = fn.rsplit('.',1)[1].lower() %}
+                                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ fn }}
+                                    {% if ext == 'pdf' %}
+                                      <button class="btn btn-sm btn-outline-primary"
+                                              data-bs-toggle="collapse"
+                                              data-bs-target="#editFileCollapse-{{ loop.index }}-{{ m._id }}">
+                                        <i class="fa fa-file-pdf me-1"></i> Lihat
+                                      </button>
+                                    {% elif ext == 'mp4' %}
+                                      <button class="btn btn-sm btn-outline-success"
+                                              data-bs-toggle="collapse"
+                                              data-bs-target="#editFileCollapse-{{ loop.index }}-{{ m._id }}">
+                                        <i class="fa fa-play me-1"></i> Putar
+                                      </button>
+                                    {% else %}
+                                      <a href="{{ url_for('static', filename='images/materials/' + fn) }}"
+                                        target="_blank"
+                                        class="btn btn-sm btn-outline-secondary">
+                                        <i class="fa fa-download me-1"></i> Unduh
+                                      </a>
+                                    {% endif %}
+                                  </li>
+                                  {% if ext in ['pdf','mp4'] %}
+                                    <div class="collapse mb-3" id="editFileCollapse-{{ loop.index }}-{{ m._id }}">
+                                      {% if ext == 'pdf' %}
+                                        <div class="ratio ratio-4x3 border rounded">
+                                          <iframe src="{{ url_for('static', filename='images/materials/' + fn) }}"
+                                                  class="w-100 h-100" style="border:0;"></iframe>
+                                        </div>
+                                      {% else %}
+                                        <video controls class="w-100 rounded mb-3">
+                                          <source src="{{ url_for('static', filename='images/materials/' + fn) }}"
+                                                  type="video/mp4">
+                                        </video>
+                                      {% endif %}
+                                    </div>
+                                  {% endif %}
+                                {% endfor %}
+
+                                {# External video link #}
+                                {% if m.video_link %}
+                                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Video Eksternal
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#editLinkCollapse-{{ m._id }}">
+                                      <i class="fa fa-link me-1"></i> Tampilkan
+                                    </button>
+                                  </li>
+                                  <div class="collapse mb-3" id="editLinkCollapse-{{ m._id }}">
+                                    <div class="ratio ratio-16x9 border rounded">
+                                      <iframe src="{{ m.video_link }}" allowfullscreen></iframe>
+                                    </div>
+                                  </div>
+                                {% endif %}
+                              </ul>
+                              {% endif %}
+
+                              <!-- Replace files & video link -->
+                              <div class="mb-3">
+                                <label class="form-label">Ganti Dokumen (opsional, bisa lebih dari satu)</label>
+                                <input type="file"
+                                      name="files"
+                                      class="form-control"
+                                      accept=".pdf,.ppt,.pptx,.doc,.docx,.mp4"
+                                      multiple>
+                                <div class="form-text">Biarkan kosong jika tidak ingin mengganti gambar.</div>
+                              </div>
+                              <div class="mb-3">
+                                <label class="form-label">Tautan Video (opsional)</label>
+                                <input class="form-control"
+                                      name="video_link"
+                                      value="{{ m.video_link }}">
+                              </div>
+                            </div>
+
+                            <div class="modal-footer">
+                              <button type="button"
+                                      class="btn btn-secondary"
+                                      data-bs-dismiss="modal">Batal</button>
+                              <button type="submit" class="btn btn-primary" onclick="syncEditDesc('{{ m._id }}')">Simpan</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+
+
+                    <!-- Delete Material -->
+                    <div class="modal fade" id="delMaterial-{{ m._id }}" tabindex="-1">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header text-danger">
+                            <h5 class="modal-title">Hapus Materi</h5>
+                            <button class="btn-close" data-bs-dismiss="modal"></button>
+                          </div>
+                          <div class="modal-body">Apakah Anda yakin ingin menghapus materi <strong>{{ m.title }}</strong>?</div>
+                          <div class="modal-footer">
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <form method="POST" action="{{ url_for('delete_material', material_id=m._id) }}">
+                              <button class="btn btn-danger">Ya, Hapus</button>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <tr><td colspan="7" class="text-center">Belum ada materi yang ditambahkan.</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+
+            <nav aria-label="Materials pagination">
+              <ul class="pagination justify-content-center mt-4">
+
+                {# ← Prev #}
+                <li class="page-item {{ 'disabled' if page == 1 }}">
+                  <a class="page-link"
+                    href="{{ url_for('admin_materials',
+                                      page=page-1,
+                                      class_page=class_page,
+                                      subject_page=subject_page,
+                                      search=request.args.get('search',''),
+                                      class_search=request.args.get('class_search',''),
+                                      subject_search=request.args.get('subject_search','')) }}"
+                    tabindex="-1">&laquo;</a>
+                </li>
+
+                {# nomor halaman #}
+                {% for p in range(1, total_pages + 1) %}
+                  <li class="page-item {{ 'active' if p == page }}">
+                    <a class="page-link"
+                      href="{{ url_for('admin_materials',
+                                        page=p,
+                                        class_page=class_page,
+                                        subject_page=subject_page,
+                                        search=request.args.get('search',''),
+                                        class_search=request.args.get('class_search',''),
+                                        subject_search=request.args.get('subject_search','')) }}">{{ p }}</a>
+                  </li>
+                {% endfor %}
+
+                {# Next → #}
+                <li class="page-item {{ 'disabled' if page == total_pages }}">
+                  <a class="page-link"
+                    href="{{ url_for('admin_materials',
+                                      page=page+1,
+                                      class_page=class_page,
+                                      subject_page=subject_page,
+                                      search=request.args.get('search',''),
+                                      class_search=request.args.get('class_search',''),
+                                      subject_search=request.args.get('subject_search','')) }}">&raquo;</a>
+                </li>
+              </ul>
+            </nav>
+
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="classes-subjects">
+        {# Tabel Kelas #}
+        <div class="row">
+          <!-- Classes -->
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header"><strong>Kelas</strong></div>
+
+              <div class="card-body table-responsive">
+                <form method="get" class="mb-3 d-flex justify-content-end">
+                  <input type="text" name="class_search" class="form-control w-auto me-2"
+                        placeholder="Cari kelas..." value="{{ request.args.get('class_search', '') }}">
+                  <input type="hidden" name="page" value="{{ page }}">
+                  <input type="hidden" name="subject_page" value="{{ subject_page }}">
+                  <button class="btn btn-outline-primary" type="submit">
+                    <i class="ti ti-search"></i> Cari
+                  </button>
+                </form>
+                <table class="table table-bordered align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>No.</th>
+                      <th>Gambar</th>
+                      <th>Judul</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if classes_display %}
+                      {% for c in classes_display %}
+                        <tr>
+                          {# nomor urut global #}
+                          <td>{{ (class_page-1)*class_per_page + loop.index }}</td>
+
+                          <td style="width:80px">
+                            {% if c.image %}
+                              <img src="{{ url_for('static', filename='images/img_classes/' + c.image) }}"
+                                  class="img-fluid rounded">
+                            {% else %}-{% endif %}
+                          </td>
+
+                          <td>{{ c.title }}</td>
+
+                          <td>
+                            <button class="btn btn-sm btn-info me-1"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#viewClass-{{ c._id }}">
+                              <i class="ti ti-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning me-1"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editClass-{{ c._id }}">
+                              <i class="ti ti-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#delClass-{{ c._id }}">
+                              <i class="ti ti-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+
+                        <!-- View Class -->
+                        <div class="modal fade" id="viewClass-{{ c._id }}" tabindex="-1">
+                          <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">{{ c.title }}</h5>
+                                <button class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                {% if c.image %}
+                                  <label class="form-label">Gambar Kelas</label>
+                                  <ul class="list-group mb-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                      {{ c.image }}
+                                      <button class="btn btn-sm btn-outline-primary"
+                                              data-bs-toggle="collapse"
+                                              data-bs-target="#viewClassImage-{{ c._id }}">
+                                        <i class="fa fa-image me-1"></i> Lihat Gambar
+                                      </button>
+                                    </li>
+                                    <div class="collapse mb-3" id="viewClassImage-{{ c._id }}">
+                                      <img src="{{ url_for('static', filename='images/img_classes/' + c.image) }}"
+                                          class="img-fluid rounded w-100 border">
+                                    </div>
+                                  </ul>
+                                {% endif %}
+
+                                <p>{{ c.description|safe }}</p>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Batal</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Edit Class -->
+                        <div class="modal fade" id="editClass-{{ c._id }}" tabindex="-1">
+                          <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                              <form method="POST"
+                                    action="{{ url_for('edit_class_materials', class_id=c._id) }}"
+                                    enctype="multipart/form-data">
+                                <div class="modal-header">
+                                  <h5 class="modal-title">Edit Kelas</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                  <div class="mb-3">
+                                    <label class="form-label">Judul</label>
+                                    <input class="form-control" name="title" value="{{ c.title }}" required>
+                                  </div>
+
+                                  <div class="mb-3">
+                                    <label class="form-label">Deskripsi</label>
+                                    <div class="btn-toolbar mb-2" role="toolbar" aria-label="Formatting toolbar">
+                                      <div class="btn-group me-1" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','editClassDescEditable-{{ c._id }}')"><i class="ti ti-bold"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','editClassDescEditable-{{ c._id }}')"><i class="ti ti-italic"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','editClassDescEditable-{{ c._id }}')"><i class="ti ti-underline"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','editClassDescEditable-{{ c._id }}')"><i class="ti ti-strikethrough"></i></button>
+                                      </div>
+                                      <div class="btn-group me-1" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','editClassDescEditable-{{ c._id }}')"><i class="ti ti-align-left"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','editClassDescEditable-{{ c._id }}')"><i class="ti ti-align-center"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','editClassDescEditable-{{ c._id }}')"><i class="ti ti-align-right"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','editClassDescEditable-{{ c._id }}')"><i class="ti ti-align-justified"></i></button>
+                                      </div>
+                                      <div class="btn-group me-1">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editClassDescEditable-{{ c._id }}','insertUnorderedList')"><i class="ti ti-list"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editClassDescEditable-{{ c._id }}','insertOrderedList')"><i class="ti ti-list-numbers"></i></button>
+                                      </div>
+                                      <div class="btn-group me-1">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editClassDescEditable-{{ c._id }}','createLink', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editClassDescEditable-{{ c._id }}','insertImage', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+                                      </div>
+                                      <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editClassDescEditable-{{ c._id }}','1')"><small>A</small></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editClassDescEditable-{{ c._id }}','3')"><span>A</span></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editClassDescEditable-{{ c._id }}','5')"><strong>A</strong></button>
+                                      </div>
+                                    </div>
+
+                                    <div id="editClassDescEditable-{{ c._id }}" contenteditable="true" class="border rounded p-2" style="height: 150px; background-color: #fff; overflow-y: auto;">
+                                      {{ c.description|safe }}
+                                    </div>
+                                    <textarea name="description" id="editClassDescInput-{{ c._id }}" hidden></textarea>
+                                  </div>
+
+                                  {% if c.image %}
+                                    <label class="form-label">Gambar Saat Ini</label>
+                                    <ul class="list-group mb-3">
+                                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ c.image }}
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#editClassImageCollapse-{{ c._id }}">
+                                          <i class="fa fa-image me-1"></i> Lihat Gambar
+                                        </button>
+                                      </li>
+                                      <div class="collapse mb-3" id="editClassImageCollapse-{{ c._id }}">
+                                        <img src="{{ url_for('static', filename='images/img_classes/' + c.image) }}"
+                                            class="img-fluid rounded border w-100">
+                                      </div>
+                                    </ul>
+                                  {% endif %}
+
+                                  <div class="mb-3">
+                                    <label class="form-label">Ganti Gambar</label>
+                                    <input type="file" name="image" class="form-control"
+                                          accept=".png,.jpg,.jpeg,.gif">
+                                    <div class="form-text">Biarkan kosong jika tidak ingin mengganti gambar.</div>
+                                  </div>
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                  <button type="submit" class="btn btn-primary" onclick="syncEditClassDesc('{{ c._id }}')">Simpan</button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Delete Class -->
+                        <div class="modal fade" id="delClass-{{ c._id }}" tabindex="-1">
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header text-danger">
+                                <h5 class="modal-title">Hapus Kelas</h5>
+                                <button class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                Apakah Anda yakin ingin menghapus kelas <strong>{{ c.title }}</strong>?
+                              </div>
+                              <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <form method="POST"
+                                      action="{{ url_for('delete_class_materials', class_id=c._id) }}">
+                                  <button class="btn btn-danger">Ya, Hapus</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="5" class="text-center">Belum ada kelas yang ditambahkan.</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+
+                <nav aria-label="Classes pagination">
+                  <ul class="pagination justify-content-center mt-3">
+
+                    <li class="page-item {{ 'disabled' if class_page == 1 }}">
+                      <a class="page-link"
+                        href="{{ url_for('admin_materials',
+                                          page=page,
+                                          class_page=class_page-1,
+                                          subject_page=subject_page,
+                                          search=request.args.get('search',''),
+                                          class_search=request.args.get('class_search',''),
+                                          subject_search=request.args.get('subject_search','')) }}">&laquo;</a>
+                    </li>
+
+                    {% for p in range(1, class_total_pages + 1) %}
+                      <li class="page-item {{ 'active' if p == class_page }}">
+                        <a class="page-link"
+                          href="{{ url_for('admin_materials',
+                                            page=page,
+                                            class_page=p,
+                                            subject_page=subject_page,
+                                            search=request.args.get('search',''),
+                                            class_search=request.args.get('class_search',''),
+                                            subject_search=request.args.get('subject_search','')) }}">{{ p }}</a>
+                      </li>
+                    {% endfor %}
+
+                    <li class="page-item {{ 'disabled' if class_page == class_total_pages }}">
+                      <a class="page-link"
+                        href="{{ url_for('admin_materials',
+                                          page=page,
+                                          class_page=class_page+1,
+                                          subject_page=subject_page,
+                                          search=request.args.get('search',''),
+                                          class_search=request.args.get('class_search',''),
+                                          subject_search=request.args.get('subject_search','')) }}">&raquo;</a>
+                    </li>
+                  </ul>
+                </nav>
+
+              </div> <!-- card-body -->
+            </div> <!-- card -->
+          </div> <!-- col -->
+
+
+          <!-- Subjects -->
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header"><strong>Mapel</strong></div>
+
+              <div class="card-body table-responsive">
+                <form method="get" class="mb-3 d-flex justify-content-end">
+                  <input type="text" name="subject_search" class="form-control w-auto me-2"
+                        placeholder="Cari mapel..." value="{{ request.args.get('subject_search', '') }}">
+                  <input type="hidden" name="page" value="{{ page }}">
+                  <input type="hidden" name="class_page" value="{{ class_page }}">
+                  <button class="btn btn-outline-primary" type="submit">
+                    <i class="ti ti-search"></i> Cari
+                  </button>
+                </form>
+                <table class="table table-bordered align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>No.</th>
+                      <th>Gambar</th>
+                      <th>Judul</th>
+                      <th>Kelas</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if subjects_display %}
+                      {% for s in subjects_display %}
+                        <tr>
+                          {# nomor urut = offset + index #}
+                          <td>{{ (subject_page-1)*subject_per_page + loop.index }}</td>
+
+                          <td style="width:80px">
+                            {% if s.image %}
+                              <img src="{{ url_for('static', filename='images/subjects/' + s.image) }}" class="img-fluid rounded">
+                            {% else %}-{% endif %}
+                          </td>
+
+                          <td>{{ s.title }}</td>
+
+                          <td>
+                            {% for c in classes %}
+                              {% if c._id == s.class_id %}
+                                {{ c.title }}
+                              {% endif %}
+                            {% endfor %}
+                          </td>
+
+                          <td>
+                            <button class="btn btn-sm btn-info me-1"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#viewSubject-{{ s._id }}">
+                              <i class="ti ti-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning me-1"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editSubject-{{ s._id }}">
+                              <i class="ti ti-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#delSubject-{{ s._id }}">
+                              <i class="ti ti-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+
+                        <!-- View Subject -->
+                        <div class="modal fade" id="viewSubject-{{ s._id }}" tabindex="-1">
+                          <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">{{ s.title }}</h5>
+                                <button class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                {% if s.image %}
+                                  <label class="form-label">Gambar Mapel</label>
+                                  <ul class="list-group mb-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                      {{ s.image }}
+                                      <button type="button" class="btn btn-sm btn-outline-primary"
+                                              data-bs-toggle="collapse"
+                                              data-bs-target="#viewSubjectImage-{{ s._id }}">
+                                        <i class="fa fa-image me-1"></i> Lihat Gambar
+                                      </button>
+                                    </li>
+                                    <div class="collapse mb-3" id="viewSubjectImage-{{ s._id }}">
+                                      <img src="{{ url_for('static', filename='images/subjects/' + s.image) }}"
+                                          class="img-fluid rounded border w-100">
+                                    </div>
+                                  </ul>
+                                {% endif %}
+                                <p>{{ s.description or 'No description' }}</p>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Batal</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Edit Subject -->
+                        <div class="modal fade" id="editSubject-{{ s._id }}" tabindex="-1">
+                          <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                              <form method="POST"
+                                    action="{{ url_for('edit_subject_materials', subject_id=s._id) }}"
+                                    enctype="multipart/form-data">
+                                <div class="modal-header">
+                                  <h5 class="modal-title">Edit Mapel</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                  <div class="mb-3">
+                                    <label class="form-label">Kelas</label>
+                                    <select class="form-select" name="class_id" required>
+                                      {% for c in classes %}
+                                        <option value="{{ c._id }}"
+                                                {% if c._id == s.class_id %}selected{% endif %}>
+                                          {{ c.title }}
+                                        </option>
+                                      {% endfor %}
+                                    </select>
+                                  </div>
+
+                                  <div class="mb-3">
+                                    <label class="form-label">Judul</label>
+                                    <input class="form-control" name="title" value="{{ s.title }}" required>
+                                  </div>
+
+                                  <div class="mb-3">
+                                    <label class="form-label">Deskripsi</label>
+                                    <div class="btn-toolbar mb-2" role="toolbar" aria-label="Formatting toolbar">
+                                      <div class="btn-group me-1" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','editSubjectDescEditable-{{ s._id }}')"><i class="ti ti-bold"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','editSubjectDescEditable-{{ s._id }}')"><i class="ti ti-italic"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','editSubjectDescEditable-{{ s._id }}')"><i class="ti ti-underline"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','editSubjectDescEditable-{{ s._id }}')"><i class="ti ti-strikethrough"></i></button>
+                                      </div>
+                                      <div class="btn-group me-1" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','editSubjectDescEditable-{{ s._id }}')"><i class="ti ti-align-left"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','editSubjectDescEditable-{{ s._id }}')"><i class="ti ti-align-center"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','editSubjectDescEditable-{{ s._id }}')"><i class="ti ti-align-right"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','editSubjectDescEditable-{{ s._id }}')"><i class="ti ti-align-justified"></i></button>
+                                      </div>
+                                      <div class="btn-group me-1">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editSubjectDescEditable-{{ s._id }}','insertUnorderedList')"><i class="ti ti-list"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editSubjectDescEditable-{{ s._id }}','insertOrderedList')"><i class="ti ti-list-numbers"></i></button>
+                                      </div>
+                                      <div class="btn-group me-1">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editSubjectDescEditable-{{ s._id }}','createLink', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editSubjectDescEditable-{{ s._id }}','insertImage', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+                                      </div>
+                                      <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editSubjectDescEditable-{{ s._id }}','1')"><small>A</small></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editSubjectDescEditable-{{ s._id }}','3')"><span>A</span></button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','editSubjectDescEditable-{{ s._id }}','5')"><strong>A</strong></button>
+                                      </div>
+                                    </div>
+
+                                    <div id="editSubjectDescEditable-{{ s._id }}" contenteditable="true" class="border rounded p-2" style="height: 150px; background-color: #fff; overflow-y: auto;">
+                                      {{ s.description|safe }}
+                                    </div>
+                                    <textarea name="description" id="editSubjectDescInput-{{ s._id }}" hidden></textarea>
+                                  </div>
+
+                                  {% if s.image %}
+                                    <label class="form-label">Gambar Saat Ini</label>
+                                    <ul class="list-group mb-3">
+                                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ s.image }}
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#editSubjectImageCollapse-{{ s._id }}">
+                                          <i class="fa fa-image me-1"></i> Lihat Gambar
+                                        </button>
+                                      </li>
+                                      <div class="collapse mb-3" id="editSubjectImageCollapse-{{ s._id }}">
+                                        <img src="{{ url_for('static', filename='images/subjects/' + s.image) }}"
+                                            class="img-fluid rounded border w-100">
+                                      </div>
+                                    </ul>
+                                  {% endif %}
+
+                                  <div class="mb-3">
+                                    <label class="form-label">Ganti Gambar</label>
+                                    <input type="file" name="image" class="form-control"
+                                          accept=".png,.jpg,.jpeg,.gif">
+                                    <div class="form-text">Biarkan kosong jika tidak ingin mengganti gambar.</div>
+                                  </div>
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                  <button type="submit" class="btn btn-primary" onclick="syncEditSubjectDesc('{{ s._id }}')">Simpan</button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Delete Subject -->
+                        <div class="modal fade" id="delSubject-{{ s._id }}" tabindex="-1">
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header text-danger">
+                                <h5 class="modal-title">Hapus Mapel</h5>
+                                <button class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                Apakah Anda yakin ingin menghapus mapel <strong>{{ s.title }}</strong>?
+                              </div>
+                              <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <form method="POST"
+                                      action="{{ url_for('delete_subject_materials', subject_id=s._id) }}">
+                                  <button class="btn btn-danger">Ya, Hapus</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="5" class="text-center">Belum ada mapel yang ditambahkan.</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+
+                <nav aria-label="Subjects pagination">
+                  <ul class="pagination justify-content-center mt-3">
+
+                    <li class="page-item {{ 'disabled' if subject_page == 1 }}">
+                      <a class="page-link"
+                        href="{{ url_for('admin_materials',
+                                          page=page,
+                                          class_page=class_page,
+                                          subject_page=subject_page-1,
+                                          search=request.args.get('search',''),
+                                          class_search=request.args.get('class_search',''),
+                                          subject_search=request.args.get('subject_search','')) }}">&laquo;</a>
+                    </li>
+
+                    {% for p in range(1, subject_total_pages + 1) %}
+                      <li class="page-item {{ 'active' if p == subject_page }}">
+                        <a class="page-link"
+                          href="{{ url_for('admin_materials',
+                                            page=page,
+                                            class_page=class_page,
+                                            subject_page=p,
+                                            search=request.args.get('search',''),
+                                            class_search=request.args.get('class_search',''),
+                                            subject_search=request.args.get('subject_search','')) }}">{{ p }}</a>
+                      </li>
+                    {% endfor %}
+
+                    <li class="page-item {{ 'disabled' if subject_page == subject_total_pages }}">
+                      <a class="page-link"
+                        href="{{ url_for('admin_materials',
+                                          page=page,
+                                          class_page=class_page,
+                                          subject_page=subject_page+1,
+                                          search=request.args.get('search',''),
+                                          class_search=request.args.get('class_search',''),
+                                          subject_search=request.args.get('subject_search','')) }}">&raquo;</a>
+                    </li>
+                  </ul>
+                </nav>
+
+
+              </div> <!-- card-body -->
+            </div> <!-- card -->
+          </div> <!-- col -->
+
+        </div>
+        <!-- /row -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Subject Modal -->
+<div class="modal fade" id="addSubjectModal" tabindex="-1">
+<div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-content">
+    <form method="POST" action="{{ url_for('add_subject_materials') }}" enctype="multipart/form-data">
+      <div class="modal-header"><h5 class="modal-title">Tambah Mapel</h5></div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Kelas</label>
+          <select class="form-select" name="class_id" required>
+            <option value="" disabled selected>Pilih kelas</option>
+            {% for c in classes %}
+              <option value="{{ c._id }}">{{ c.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Judul</label>
+          <input class="form-control" name="title" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Deskripsi</label>
+          <div class="btn-toolbar mb-2" role="toolbar" aria-label="Formatting toolbar">
+            <div class="btn-group me-1" role="group">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','addSubjectDescEditable')"><i class="ti ti-bold"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','addSubjectDescEditable')"><i class="ti ti-italic"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','addSubjectDescEditable')"><i class="ti ti-underline"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','addSubjectDescEditable')"><i class="ti ti-strikethrough"></i></button>
+            </div>
+            <div class="btn-group me-1" role="group">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','addSubjectDescEditable')"><i class="ti ti-align-left"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','addSubjectDescEditable')"><i class="ti ti-align-center"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','addSubjectDescEditable')"><i class="ti ti-align-right"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','addSubjectDescEditable')"><i class="ti ti-align-justified"></i></button>
+            </div>
+            <div class="btn-group me-1">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addSubjectDescEditable','insertUnorderedList')"><i class="ti ti-list"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addSubjectDescEditable','insertOrderedList')"><i class="ti ti-list-numbers"></i></button>
+            </div>
+            <div class="btn-group me-1">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addSubjectDescEditable','createLink', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addSubjectDescEditable','insertImage', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+            </div>
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addSubjectDescEditable','1')"><small>A</small></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addSubjectDescEditable','3')"><span>A</span></button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addSubjectDescEditable','5')"><strong>A</strong></button>
+            </div>
+          </div>
+
+          <div id="addSubjectDescEditable" contenteditable="true" class="border rounded p-2" style="height: 150px; background-color: #fff; overflow-y: auto;"></div>
+          <textarea name="description" id="addSubjectDescInput" hidden></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Gambar</label>
+          <input type="file" name="image" class="form-control" accept=".png,.jpg,.jpeg,.gif">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="submit" class="btn btn-info" onclick="syncAddSubjectDesc()">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
+
+<!-- ADD CLASS MODAL -->
+<div class="modal fade" id="addClassModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('add_class_materials') }}" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title">Tambah Kelas</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Judul</label>
+            <input class="form-control" name="title" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Deskripsi</label>
+            <div class="btn-toolbar mb-2" role="toolbar" aria-label="Formatting toolbar">
+              <div class="btn-group me-1" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','addClassDescEditable')"><i class="ti ti-bold"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','addClassDescEditable')"><i class="ti ti-italic"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','addClassDescEditable')"><i class="ti ti-underline"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','addClassDescEditable')"><i class="ti ti-strikethrough"></i></button>
+              </div>
+              <div class="btn-group me-1" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','addClassDescEditable')"><i class="ti ti-align-left"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','addClassDescEditable')"><i class="ti ti-align-center"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','addClassDescEditable')"><i class="ti ti-align-right"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','addClassDescEditable')"><i class="ti ti-align-justified"></i></button>
+              </div>
+              <div class="btn-group me-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addClassDescEditable','insertUnorderedList')"><i class="ti ti-list"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addClassDescEditable','insertOrderedList')"><i class="ti ti-list-numbers"></i></button>
+              </div>
+              <div class="btn-group me-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addClassDescEditable','createLink', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addClassDescEditable','insertImage', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+              </div>
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addClassDescEditable','1')"><small>A</small></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addClassDescEditable','3')"><span>A</span></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addClassDescEditable','5')"><strong>A</strong></button>
+              </div>
+            </div>
+
+            <div id="addClassDescEditable" contenteditable="true" class="border rounded p-2" style="height: 150px; background-color: #fff; overflow-y: auto;"></div>
+            <textarea name="description" id="addClassDescInput" hidden></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Gambar</label>
+            <input type="file" name="image" class="form-control" accept=".png,.jpg,.jpeg,.gif">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-info" onclick="syncAddClassDesc()">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Material Modal -->
+<div class="modal fade" id="addMaterialModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('add_material') }}" enctype="multipart/form-data">
+        <div class="modal-header"><h5 class="modal-title">Tambah Materi</h5></div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Kelas</label>
+              <select class="form-select" name="class_id" required>
+                <option value="" disabled selected>Pilih kelas</option>
+                {% for c in classes %}
+                  <option value="{{ c._id }}">{{ c.title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Mapel</label>
+              <select class="form-select" name="subject_id" required>
+                <option value="" disabled selected>Pilih mapel</option>
+                {% for s in subjects %}
+                  <option value="{{ s._id }}">{{ s.title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Judul</label>
+            <input class="form-control" name="title" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Deskripsi</label>
+            <div class="btn-toolbar mb-2" role="toolbar" aria-label="Formatting toolbar">
+              <div class="btn-group me-1" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','addDescEditable')"><i class="ti ti-bold"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','addDescEditable')"><i class="ti ti-italic"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','addDescEditable')"><i class="ti ti-underline"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','addDescEditable')"><i class="ti ti-strikethrough"></i></button>
+              </div>
+              <div class="btn-group me-1" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','addDescEditable')"><i class="ti ti-align-left"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','addDescEditable')"><i class="ti ti-align-center"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','addDescEditable')"><i class="ti ti-align-right"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','addDescEditable')"><i class="ti ti-align-justified"></i></button>
+              </div>
+              <div class="btn-group me-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addDescEditable','insertUnorderedList')"><i class="ti ti-list"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addDescEditable','insertOrderedList')"><i class="ti ti-list-numbers"></i></button>
+              </div>
+              <div class="btn-group me-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addDescEditable','createLink', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('addDescEditable','insertImage', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+              </div>
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addDescEditable','1')"><small>A</small></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addDescEditable','3')"><span>A</span></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addDescEditable','5')"><strong>A</strong></button>
+              </div>
+            </div>
+
+            <div id="addDescEditable" contenteditable="true" class="border rounded p-2" style="height: 150px; background-color: #fff; overflow-y: auto;"></div>
+            <textarea name="description" id="addDescInput" hidden></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Dokumen (opsional, lebih dari satu)</label>
+            <input type="file" name="files" class="form-control" accept=".pdf,.ppt,.pptx,.doc,.docx,.mp4" multiple>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Video Link (opsional)</label>
+            <input class="form-control" name="video_link">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary" onclick="syncAddDesc()">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Ambil dari localStorage
+    const lastTab = localStorage.getItem("activeTab");
+    if (lastTab) {
+      const tabTrigger = document.querySelector(`[data-bs-target="${lastTab}"]`);
+      if (tabTrigger) {
+        const tab = new bootstrap.Tab(tabTrigger);
+        tab.show();
+      }
+    }
+
+    // Simpan ke localStorage setiap tab diklik
+    const tabLinks = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabLinks.forEach(link => {
+      link.addEventListener("shown.bs.tab", function (e) {
+        const targetSelector = e.target.getAttribute("data-bs-target") || e.target.getAttribute("href");
+        if (targetSelector) {
+          localStorage.setItem("activeTab", targetSelector);
+        }
+      });
+    });
+  });
+</script>
+
+<script>
+  function syncAddDesc() {
+    const html = document.getElementById("addDescEditable").innerHTML;
+    document.getElementById("addDescInput").value = html;
+  }
+
+  function syncEditDesc(id) {
+    const html = document.getElementById("editDescEditable-" + id).innerHTML;
+    document.getElementById("editDescInput-" + id).value = html;
+  }
+
+  function syncAddClassDesc() {
+    const html = document.getElementById("addClassDescEditable").innerHTML;
+    document.getElementById("addClassDescInput").value = html;
+  }
+
+  function syncEditClassDesc(id) {
+    const html = document.getElementById("editClassDescEditable-" + id).innerHTML;
+    document.getElementById("editClassDescInput-" + id).value = html;
+  }
+
+  function syncAddSubjectDesc() {
+    const html = document.getElementById("addSubjectDescEditable").innerHTML;
+    document.getElementById("addSubjectDescInput").value = html;
+  }
+
+  function syncEditSubjectDesc(id) {
+    const html = document.getElementById("editSubjectDescEditable-" + id).innerHTML;
+    document.getElementById("editSubjectDescInput-" + id).value = html;
+  }
+
+  function execCommandForId(command, editableDivId, value = null) {
+    const editableDiv = document.getElementById(editableDivId);
+    editableDiv.focus();
+    if (value !== null) {
+      document.execCommand(command, false, value);
+    } else {
+      document.execCommand(command, false, null);
+    }
+  }
+</script>
+
+
+{% include "admin/components/footer.html" %}

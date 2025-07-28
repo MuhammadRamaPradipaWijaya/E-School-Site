@@ -1,0 +1,292 @@
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+
+    <!-- Page Header -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+      <h4 class="page-title mb-0">Manajemen Galeri</h4>
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGalleryModal">
+        <i class="ti ti-image-plus me-1"></i> Tambah Gambar
+      </button>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Beranda</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Galeri</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Gallery Table -->
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <form method="get" class="mb-3 d-flex justify-content-end">
+            <input type="text" name="search" class="form-control w-auto me-2" placeholder="Cari judul atau nama file..." value="{{ search_query }}">
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="ti ti-search"></i> Cari
+            </button>
+          </form>
+          <table class="table table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>No.</th>
+                <th>Pratinjau Gambar</th>
+                <th>Judul</th>
+                <th>Diunggah Pada</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if galleries %}
+                {% for img in galleries %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="text-center">
+                      {% if img.source == 'gallery' %}
+                        <img src="{{ url_for('static', filename='images/gallery/' + img.filename) }}"
+                             class="img-thumbnail"
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                      {% elif img.source == 'publication' %}
+                        <img src="{{ url_for('static', filename='images/publications/' + img.filename) }}"
+                             class="img-thumbnail"
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                      {% else %}
+                        <span class="text-muted">Tidak Ada Gambar</span>
+                      {% endif %}
+                    </td>
+                    {% set img_title = img.title[:50] + ('...' if img.title|length > 50 else '') %}
+                    <td>{{ img_title }}</td>
+                    <td>{{ img.uploaded_at.strftime('%d %b %Y %H:%M')  }}</td>
+                    <td>
+                      <!-- View Details -->
+                      <button type="button" class="btn btn-sm btn-info me-1"
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewGalleryModal-{{ img._id }}"
+                              title="View Details">
+                        <i class="ti ti-eye"></i>
+                      </button>
+
+                      {% if img.source == 'gallery' %}
+                      <!-- Edit -->
+                      <button type="button" class="btn btn-sm btn-warning me-1"
+                              data-bs-toggle="modal"
+                              data-bs-target="#editGalleryModal-{{ img._id }}"
+                              title="Edit Image">
+                        <i class="ti ti-edit"></i>
+                      </button>
+
+                      <!-- Delete -->
+                      <button type="button" class="btn btn-sm btn-danger"
+                              data-bs-toggle="modal"
+                              data-bs-target="#deleteGalleryModal-{{ img._id }}"
+                              title="Delete Image">
+                        <i class="ti ti-trash"></i>
+                      </button>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="5" class="text-center">
+                    Tidak ada gambar galeri yang ditemukan. Klik 'Tambah Gambar' untuk mengunggah.
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <nav aria-label="Gallery pagination">
+            <ul class="pagination justify-content-center mt-4">
+              {% if page > 1 %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('admin_gallery', page=page-1, search=search) }}">&laquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+              {% endif %}
+
+              {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                  <a class="page-link" href="{{ url_for('admin_gallery', page=p, search=search) }}">{{ p }}</a>
+                </li>
+              {% endfor %}
+
+              {% if page < total_pages %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('admin_gallery', page=page+1, search=search) }}">&raquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD GALLERY MODAL -->
+<div class="modal fade" id="addGalleryModal" tabindex="-1" aria-labelledby="addGalleryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addGalleryModalLabel">Tambah Gambar</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="{{ url_for('add_gallery') }}" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="addGalleryTitle" class="form-label">Judul</label>
+            <input type="text" class="form-control" id="addGalleryTitle" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label for="addGalleryFile" class="form-label">Berkas Gambar</label>
+            <input type="file" class="form-control" id="addGalleryFile" name="image_file" accept="image/*" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODALS -->
+{% for img in galleries %}
+<div class="modal fade" id="viewGalleryModal-{{ img._id }}" tabindex="-1"
+     aria-labelledby="viewGalleryModalLabel-{{ img._id }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ img.title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        {% if img.source in ['gallery', 'publication'] %}
+          <label class="form-label">Gambar</label>
+          <ul class="list-group mb-3">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{ img.filename }}
+              <button type="button" class="btn btn-sm btn-outline-primary"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#viewGalleryImageCollapse-{{ img._id }}">
+                <i class="fa fa-image me-1"></i> Lihat Gambar
+              </button>
+            </li>
+            <div class="collapse mt-2" id="viewGalleryImageCollapse-{{ img._id }}">
+              <img class="img-fluid rounded border w-100"
+                  src="{% if img.source == 'gallery' %}
+                            {{ url_for('static', filename='images/gallery/' + img.filename) }}
+                        {% elif img.source == 'publication' %}
+                            {{ url_for('static', filename='images/publications/' + img.filename) }}
+                        {% endif %}"
+                  alt="{{ img.title }}">
+            </div>
+          </ul>
+        {% endif %}
+        <p><strong>Diunggah Pada:</strong> {{ img.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- EDIT & DELETE MODALS (for gallery only) -->
+{% for img in galleries if img.source == 'gallery' %}
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editGalleryModal-{{ img._id }}" tabindex="-1"
+       aria-labelledby="editGalleryModalLabel-{{ img._id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <form method="POST" action="{{ url_for('edit_gallery', gallery_id=img._id) }}" enctype="multipart/form-data">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Gambar</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Judul</label>
+              <input type="text" class="form-control" name="title" value="{{ img.title }}" required>
+            </div>
+
+            {% if img.filename %}
+              <label class="form-label">Gambar Saat Ini</label>
+              <ul class="list-group mb-3">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  {{ img.filename }}
+                  <button type="button" class="btn btn-sm btn-outline-primary"
+                          data-bs-toggle="collapse"
+                          data-bs-target="#editGalleryImageCollapse-{{ img._id }}">
+                    <i class="fa fa-image me-1"></i> Lihat Gambar
+                  </button>
+                </li>
+                <div class="collapse mt-2" id="editGalleryImageCollapse-{{ img._id }}">
+                  <img src="{{ url_for('static', filename='images/gallery/' + img.filename) }}"
+                      class="img-fluid rounded border w-100">
+                </div>
+              </ul>
+            {% endif %}
+
+            <div class="mb-3">
+              <label class="form-label">Ganti Gambar</label>
+              <input type="file" class="form-control" name="image_file" accept="image/*">
+              <div class="form-text">Biarkan kosong jika tidak ingin mengganti gambar.</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal fade" id="deleteGalleryModal-{{ img._id }}" tabindex="-1"
+       aria-labelledby="deleteGalleryModalLabel-{{ img._id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger">Hapus Gambar</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          Apakah Anda yakin ingin menghapus <strong>{{ img.title }}</strong>?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <form method="POST" action="{{ url_for('delete_gallery', gallery_id=img._id) }}">
+            <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+{% include "admin/components/footer.html" %}

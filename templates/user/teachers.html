@@ -1,0 +1,99 @@
+{% include "user/components/header.html" %}
+{% include "user/components/navbar.html" %}
+
+<!-- Header Start -->
+<div class="container-fluid mb-5 p-0"
+     style="background-image: url('{{ url_for('static', filename='images/headers/' ~ settings.header_image) }}'); background-size: cover; background-position: center;">
+    <div class="d-flex flex-column align-items-center justify-content-center" style="height: 400px; background-color: rgba(0, 0, 0, 0.5);">
+        <h3 class="display-3 font-weight-bold text-white">Guru dan Staf</h3>
+        <div class="d-inline-flex text-white">
+            <p class="m-0"><a class="text-white" href="{{ url_for('home') }}">Beranda</a></p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">Guru dan Staf</p>
+        </div>
+    </div>
+</div>
+<!-- Header End -->
+
+
+<!-- Team Start -->
+<div class="container-fluid pt-5">
+    <div class="container">
+        <div class="text-center pb-2">
+            <p class="section-title px-5"><span class="px-2">Guru dan Staf</span></p>
+            <h1 class="mb-4">Daftar Guru dan Staf</h1>
+        </div>
+        <div class="row">
+
+            {# Looping di sini #}
+            {% if teachers %}
+                {% for teacher in teachers %}
+                    <div class="col-md-6 col-lg-3 text-center team mb-5">
+                        <div class="position-relative overflow-hidden mb-4" style="border-radius: 100%;">
+                            {# Jika guru memiliki avatar tersimpan di folder static/images/teachers #}
+                            {% if teacher.avatar %}
+                                <img
+                                  class="img-fluid w-100"
+                                  src="{{ url_for('static', filename='images/teachers/' + teacher.avatar) }}"
+                                  alt="{{ teacher.name }}"
+                                >
+                            {% else %}
+                                {# Jika tidak ada avatar, gunakan gambar default #}
+                                <img
+                                  class="img-fluid w-100"
+                                  src="{{ url_for('static', filename='images/teachers/default_teacher.png') }}"
+                                  alt="{{ teacher.name }}"
+                                >
+                            {% endif %}
+
+                            <div
+                                class="team-social d-flex align-items-center justify-content-center w-100 h-100 position-absolute">
+                                {# Placeholder kalau nanti mau link social media #}
+                                {% if teacher.instagram %}
+                                    <a class="btn btn-outline-light text-center mr-2 px-0"
+                                       style="width: 38px; height: 38px;"
+                                       href="{{ teacher.instagram }}"
+                                       target="_blank"
+                                    >
+                                        <i class="fab fa-instagram"></i>
+                                    </a>
+                                {% endif %}
+                                {% if teacher.facebook %}
+                                    <a class="btn btn-outline-light text-center mr-2 px-0"
+                                       style="width: 38px; height: 38px;"
+                                       href="{{ teacher.facebook }}"
+                                       target="_blank"
+                                    >
+                                        <i class="fab fa-facebook-f"></i>
+                                    </a>
+                                {% endif %}
+                                {% if teacher.linkedin %}
+                                    <a class="btn btn-outline-light text-center px-0"
+                                       style="width: 38px; height: 38px;"
+                                       href="{{ teacher.linkedin }}"
+                                       target="_blank"
+                                    >
+                                        <i class="fab fa-linkedin-in"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <h4>{{ teacher.name }}</h4>
+                        <h6>NIP.{{ teacher.teacher_id }}</h6>
+                        <i>{{ teacher.position }}</i>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        Tidak ada guru yang ditemukan.
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+<!-- Team End -->
+
+{% include "user/components/footer.html" %}

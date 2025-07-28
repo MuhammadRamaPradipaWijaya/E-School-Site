@@ -1,0 +1,164 @@
+{% include "user/components/header.html" %}
+{% include "user/components/navbar.html" %}
+
+<!-- Header Start -->
+<div class="container-fluid mb-5 p-0"
+     style="background-image: url('{{ url_for('static', filename='images/headers/' ~ settings.header_image) }}'); background-size: cover; background-position: center;">
+    <div class="d-flex flex-column align-items-center justify-content-center"
+         style="height: 400px; background-color: rgba(0, 0, 0, 0.5);">
+        <h3 class="display-3 font-weight-bold text-white">Informasi</h3>
+        <div class="d-inline-flex text-white">
+            <p class="m-0"><a class="text-white" href="{{ url_for('home') }}">Beranda</a></p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">Informasi</p>
+        </div>
+    </div>
+</div>
+<!-- Header End -->
+
+<!-- Blog List Start -->
+<div class="container py-5">
+    <div class="row">
+        <!-- Kolom Kiri: Artikel -->
+        <div class="col-lg-8">
+            <div class="d-flex flex-column text-left mb-4">
+                <p class="section-title pr-5"><span class="pr-2">Halaman Informasi</span></p>
+                <h1 class="mb-3">Informasi Terbaru</h1>
+            </div>
+
+            {% if articles %}
+                {% for article in articles %}
+                <div class="mb-4 p-3 border rounded shadow-sm bg-white">
+                    <div class="row g-0">
+                        <!-- Gambar Artikel -->
+                        <div class="col-md-4">
+                            <div style="height: 250px; overflow: hidden; border-radius: .375rem;">
+                                {% if article.feature_image %}
+                                <img src="{{ url_for('static', filename='images/publications/' + article.feature_image) }}"
+                                    class="w-100 h-100"
+                                    style="object-fit: cover;" alt="Feature Image">
+                                {% else %}
+                                <img src="/static/user/img/detail.jpg"
+                                    class="w-100 h-100"
+                                    style="object-fit: cover;" alt="Placeholder">
+                                {% endif %}
+                            </div>
+                        </div>
+
+
+                        <!-- Konten Artikel -->
+                        <div class="col-md-8 d-flex flex-column justify-content-between p-3">
+                            <div>
+                                {# Truncate title max 60 chars #}
+                                {% set truncated_title = article.title[:105] + ('...' if article.title|length > 105 else '') %}
+                                <h5 class="fw-bold" style="text-align: justify;">{{ truncated_title }}</h5>
+
+                                {# Ambil teaser dari konten max 200 chars #}
+                                {% set clean = article.content | striptags %}
+                                {% set truncated_content = clean[:150] + ('...' if clean|length > 150 else '') %}
+                                <p class="mb-2" style="text-align: justify;">{{ truncated_content }}</p>
+                            </div>
+                            <div class="text-muted small d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    <i class="fa fa-folder"></i>
+                                    {% if article.category == 'News' %}
+                                    Berita
+                                    {% elif article.category == 'Event' %}
+                                    Acara
+                                    {% elif article.category == 'Announcement' %}
+                                    Pengumuman
+                                    {% elif article.category == 'Achievement' %}
+                                    Prestasi
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                    &nbsp;
+                                    <i class="fa fa-calendar"></i> {{ article.created_at.strftime('%d %b %Y %H:%M') }} &nbsp;
+                                    <i class="fa fa-comments"></i> {{ article.comment_count }}
+                                </div>
+                                <a href="{{ url_for('single', article_id=article._id) }}" class="btn btn-sm btn-outline-primary">
+                                    Baca Selengkapnya
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info text-center">
+                    Tidak ada Informasi yang Tersedia.
+                </div>
+            {% endif %}
+
+            <div class="col-md-12 mb-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('news_articles', page=page-1) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    {% for p in pages %}
+                        <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('news_articles', page=p) }}">{{ p }}</a>
+                        </li>
+                    {% endfor %}
+
+                    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('news_articles', page=page+1) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    </ul>
+                </nav>
+            </div>
+
+        </div>
+
+        <!-- Kolom Kanan: Sidebar -->
+        <div class="col-lg-4 mt-5 mt-lg-0">
+        {% for category, posts in latest_by_category.items() %}
+            <div class="mb-5">
+            <h4 class="mb-3">
+                {% if category == 'News' %}
+                    Berita
+                {% elif category == 'Event' %}
+                    Acara
+                {% elif category == 'Announcement' %}
+                    Pengumuman
+                {% elif category == 'Achievement' %}
+                    Prestasi
+                {% else %}
+                    -
+                {% endif %}
+            </h4>
+            {% for post in posts %}
+                <div class="d-flex align-items-center bg-light shadow-sm rounded overflow-hidden mb-3">
+                <img class="img-fluid"
+                    src="{{ url_for('static', filename='images/publications/' + (post.feature_image or 'detail.jpg')) }}"
+                    style="width: 80px; height: 80px; object-fit: cover;">
+                <div class="pl-3 p-2">
+                    {% set post_title = post.title[:35] + ('...' if post.title|length > 35 else '') %}
+                    <h6 class="mb-1">
+                    <a href="{{ url_for('single', article_id=post._id) }}" style="text-align: justify;">
+                        {{ post_title }}
+                    </a>
+                    </h6>
+                    <p class="mb-0">
+                    <small>
+                        <i class="fa fa-calendar text-primary"></i> {{ post.created_at.strftime('%d %b %Y %H:%M') }} &nbsp;
+                        <i class="fa fa-comments text-primary"></i> {{ post.comment_count if post.comment_count is defined else 0 }}
+                    </small>
+                    </p>
+                </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+<!-- Blog List End -->
+
+{% include "user/components/footer.html" %}

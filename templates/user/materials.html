@@ -1,0 +1,70 @@
+{# templates/user/materials.html #}
+{% include "user/components/header.html" %}
+{% include "user/components/navbar.html" %}
+
+{# ---------- Hero Header ---------- #}
+<div class="container-fluid mb-5 p-0"
+     style="background-image: url('{{ url_for('static', filename='images/headers/' ~ settings.header_image) }}'); background-size: cover; background-position: center;">
+    <div class="d-flex flex-column align-items-center justify-content-center"
+         style="height: 400px; background-color: rgba(0, 0, 0, 0.5);">
+        {# judul = nama subject #}
+        <h3 class="display-3 font-weight-bold text-white">{{ subject.title }}</h3>
+        <div class="d-inline-flex text-white">
+            <p class="m-0"><a class="text-white" href="{{ url_for('home') }}">Beranda</a></p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">
+              <a class="text-white" href="{{ url_for('materials_classes') }}">E-Learning</a>
+            </p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">
+              <a class="text-white"
+                 href="{{ url_for('materials_subjects', class_id=class_id) }}">
+                 {{ class_title }}
+              </a>
+            </p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">{{ subject.title }}</p>
+        </div>
+    </div>
+</div>
+
+{# ---------- Materials list ---------- #}
+<div class="container py-5">
+
+    <div class="text-center pb-5">
+        <p class="section-title px-5"><span class="px-2">Materi</span></p>
+        <h1 class="mb-4">Pelajari Materi dari {{ subject.title }}</h1>
+        {% if subject.description %}
+        <p class="text-muted">{{ subject.description|safe }}</p>
+        {% endif %}
+    </div>
+
+    {% if materials %}
+    <div class="row">
+      {% for mat in materials %}
+        <div class="col-lg-4 col-md-6 mb-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title" style="text-align: justify;">{{ mat.title }}</h5>
+              <div class="mt-auto">
+                <a href="{{ url_for('detail_material', material_id=mat._id) }}"
+                   class="btn btn-outline-primary w-100">
+                  <i class="fa fa-book-open me-1"></i> Pelajari
+                </a>
+              </div>
+            </div>
+            <div class="fa fa-calendar card-footer small text-muted">
+              {{ mat.created_at.strftime('%d %b %Y %H:%M') }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center">
+      Belum ada materi yang tersedia untuk mata pelajaran ini.
+    </div>
+  {% endif %}
+</div>
+
+{% include "user/components/footer.html" %}

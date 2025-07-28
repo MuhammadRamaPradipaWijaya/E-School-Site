@@ -1,0 +1,127 @@
+    <!-- Footer Start -->
+    <div class="container-fluid bg-secondary text-white mt-5 py-5 px-sm-3 px-md-5">
+    <div class="row pt-5">
+        <!-- Brand & About -->
+        <div class="col-lg-3 col-md-6 mb-5 text-center text-md-left">
+        <a href="" class="navbar-brand font-weight-bold text-primary m-0 mb-4 p-0" style="font-size: 25px; line-height: 40px;">
+            <!-- <i class="flaticon-043-teddy-bear"></i> -->
+            <span class="text-white">{{ settings.school_name or 'SMP NEGERI 1 JATIROTO' }}</span>
+        </a>
+        <p style="text-align: justify;">{{ about.description|striptags|truncate(520)|safe }}</p>
+        </div>
+
+        <!-- Get In Touch -->
+        <div class="col-lg-3 col-md-6 mb-5">
+        <h3 class="text-primary mb-4">Hubungi Kami</h3>
+        <div class="d-flex mb-3">
+            <h4 class="fa fa-map-marker-alt text-primary"></h4>
+            <div class="pl-3">
+            <h5 class="text-white">Alamat</h5>
+            <p>{{ contact.address }}</p>
+            </div>
+        </div>
+        <div class="d-flex mb-3">
+            <h4 class="fa fa-envelope text-primary"></h4>
+            <div class="pl-3">
+            <h5 class="text-white">Email</h5>
+            <p>{{ contact.email }}</p>
+            </div>
+        </div>
+        <div class="d-flex mb-3">
+            <h4 class="fa fa-phone-alt text-primary"></h4>
+            <div class="pl-3">
+            <h5 class="text-white">Telepon</h5>
+            <p>{{ contact.phone }}</p>
+            </div>
+        </div>
+        <div class="d-flex">
+            <h4 class="fa fa-clock text-primary"></h4>
+            <div class="pl-3">
+            <h5 class="text-white">Waktu Layanan</h5>
+            <p>{{ contact.hours }}</p>
+            </div>
+        </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="col-lg-3 col-md-6 mb-5">
+        <h3 class="text-primary mb-4">Menu Cepat</h3>
+        <div class="d-flex flex-column">
+            <a class="text-white mb-2" href="{{ url_for('home') }}">
+            <i class="fa fa-angle-right mr-2"></i>Beranda
+            </a>
+            <a class="text-white mb-2" href="{{ url_for('about') }}">
+            <i class="fa fa-angle-right mr-2"></i>Tentang
+            </a>
+            <a class="text-white mb-2" href="{{ url_for('news_articles') }}">
+            <i class="fa fa-angle-right mr-2"></i>Informasi
+            </a>
+            <a class="text-white mb-2" href="{{ url_for('materials_classes') }}">
+            <i class="fa fa-angle-right mr-2"></i>E-Learning
+            </a>
+            <a class="text-white mb-2" href="{{ url_for('extracurricular_page') }}">
+            <i class="fa fa-angle-right mr-2"></i>Ekstrakurikuler
+            </a>
+            <a class="text-white mb-2" href="{{ url_for('teachers') }}">
+            <i class="fa fa-angle-right mr-2"></i>Guru & Staf
+            </a>
+            <a class="text-white mb-2" href="{{ url_for('gallery') }}">
+            <i class="fa fa-angle-right mr-2"></i>galeri
+            </a>
+            <a class="text-white" href="{{ url_for('contact') }}">
+            <i class="fa fa-angle-right mr-2"></i>Kontak
+            </a>
+        </div>
+        </div>
+
+        <!-- Map -->
+        <div class="col-lg-3 col-md-6 mb-5">
+        <h3 class="text-primary mb-4">Lokasi</h3>
+            <div class="embed-responsive embed-responsive-4by3">
+                <iframe
+                src="{{ contact.map_url }}"
+                width="100%" height="100%" frameborder="0"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy">
+                </iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="container-fluid pt-5" style="border-top:1px solid rgba(23,162,184,.2);">
+        <p class="m-0 text-center text-white">
+        &copy;
+        <a href="{{ url_for('home') }}" class="text-primary font-weight-bold">
+            {{ settings.school_name }}
+        </a>.
+        {{ settings.footer_text or 'All Rights Reserved.' }}
+        </p>
+    </div>
+    </div>
+    <!-- Footer End -->
+
+
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-primary p-3 back-to-top"><i class="fa fa-angle-double-up"></i></a>
+
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/user/lib/easing/easing.min.js"></script>
+    <script src="/static/user/lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="/static/user/lib/isotope/isotope.pkgd.min.js"></script>
+    <script src="/static/user/lib/lightbox/js/lightbox.min.js"></script>
+
+    <!-- Contact Javascript File -->
+    <script src="/static/user/mail/jqBootstrapValidation.min.js"></script>
+    <script src="/static/user/mail/contact.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="/static/user/js/main.js"></script>
+</body>
+
+</html>

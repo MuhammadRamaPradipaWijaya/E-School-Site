@@ -1,0 +1,128 @@
+ <!-- [ Header Topbar ] start -->
+<header class="pc-header">
+  <div class="header-wrapper"><!-- [Mobile Media Block] start -->
+<div class="me-auto pc-mob-drp">
+  <ul class="list-unstyled">
+    <li class="pc-h-item header-mobile-collapse">
+      <a href="#" class="pc-head-link head-link-secondary ms-0" id="sidebar-hide">
+        <i class="ti ti-menu-2"></i>
+      </a>
+    </li>
+    <li class="pc-h-item pc-sidebar-popup">
+      <a href="#" class="pc-head-link head-link-secondary ms-0" id="mobile-collapse">
+        <i class="ti ti-menu-2"></i>
+      </a>
+    </li>
+
+  </ul>
+</div>
+<!-- [Mobile Media Block end] -->
+<div class="ms-auto">
+  <ul class="list-unstyled">
+
+    <li class="dropdown pc-h-item">
+      <a
+        class="pc-head-link head-link-secondary dropdown-toggle arrow-none me-0"
+        data-bs-toggle="dropdown"
+        href="#"
+        role="button"
+        aria-haspopup="false"
+        aria-expanded="false"
+      >
+        <i class="ti ti-bell"></i>
+      </a>
+      <div class="dropdown-menu dropdown-notification dropdown-menu-end pc-h-dropdown">
+        <div class="dropdown-header">
+          
+          <a href="{{ url_for('mark_all_notifications_read') }}" class="link-primary float-end text-decoration-underline">
+            Semua dibaca
+          </a>
+
+
+          <h5>
+            Semua Notifikasi
+            <span class="badge bg-warning rounded-pill ms-1">{{ notifications|length }}</span>
+          </h5>
+        </div>
+        <div class="dropdown-header px-0 text-wrap header-notification-scroll position-relative" style="max-height: calc(100vh - 215px)">
+          <div class="list-group list-group-flush w-100">
+            {% for notif in notifications %}
+            <div class="list-group-item list-group-item-action">
+              <div class="d-flex">
+                <div class="flex-shrink-0">
+                  <div class="user-avtar bg-light">
+                    <i class="{{ notif.icon }}"></i>
+                  </div>
+                </div>
+                <div class="flex-grow-1 ms-2">
+                  <span class="float-end text-muted">
+                    {{ notif.time.strftime('%d %b %Y %H:%M') if notif.time }}
+                  </span>
+                  <h6 class="mb-1">{{ notif.title }}</h6>
+                  <p class="text-body fs-6 mb-1">{{ notif.content }}</p>
+                  <div class="badge rounded-pill {{ notif.badge_class or 'bg-light-secondary' }}">
+                    {{ notif.badge }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <div class="list-group-item text-muted text-center">Tidak ada notifikasi.</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="text-center py-2">
+          <a href="{{ url_for('admin_logs') }}" class="link-primary">Lihat Semua Notifikasi</a>
+        </div>
+      </div>
+    </li>
+
+
+    <li class="dropdown pc-h-item header-user-profile">
+      <a
+        class="pc-head-link head-link-primary dropdown-toggle arrow-none me-0"
+        data-bs-toggle="dropdown"
+        href="#"
+        role="button"
+        aria-haspopup="false"
+        aria-expanded="false"
+      >
+        <img src="{{ url_for('static', filename='images/avatars/' + session.get('admin_avatar', 'default_admin.png')) }}"
+          alt="user-image"
+          class="user-avtar"
+          style="width: 40px; height: 40px; object-fit: cover;" />
+
+        <span>
+          <i class="ti ti-settings"></i>
+        </span>
+      </a>
+
+      <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown">
+        <div class="dropdown-header">
+          <h4>
+            Selamat Datang,
+            <span class="small text-muted">{{ session.get('admin_username', 'Guest') }}</span>
+          </h4>
+          <p class="text-muted">{{ session.get('admin_role', 'Unknown')|capitalize }}</p>
+          <hr />
+          <div class="profile-notification-scroll position-relative" style="max-height: calc(100vh - 280px)">
+            <a href="{{ url_for('admin_settings') }}" class="dropdown-item">
+              <i class="ti ti-settings"></i>
+              <span>Pengaturan</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="dropdown-item">
+              <i class="ti ti-logout"></i>
+              <span>Keluar</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </li>
+
+
+  </ul>
+</div>
+</div>
+</header>
+<!-- [ Header ] end -->

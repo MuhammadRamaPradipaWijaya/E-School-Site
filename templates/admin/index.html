@@ -1,0 +1,164 @@
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+    <div class="row">
+
+      <!-- TOTAL CLASSES -->
+      <div class="col-xl-3 col-md-6">
+        <div class="card bg-secondary-dark dashnum-card text-white overflow-hidden">
+          <span class="round small"></span><span class="round big"></span>
+          <div class="card-body">
+            <span class="d-block f-34 f-w-500 my-2">
+              {{ total_classes }}
+              <i class="ti ti-layout-grid opacity-50"></i>
+            </span>
+            <p class="mb-0 opacity-50">Total Kelas</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL EXTRACURRICULARS -->
+      <div class="col-xl-3 col-md-6">
+        <div class="card bg-secondary-dark dashnum-card text-white overflow-hidden">
+          <span class="round small"></span><span class="round big"></span>
+          <div class="card-body">
+            <span class="d-block f-34 f-w-500 my-2">
+              {{ total_extracurricular }}
+              <i class="ti ti-trophy opacity-50"></i>
+            </span>
+            <p class="mb-0 opacity-50">Total Ekstrakurikuler</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL PUBLICATIONS -->
+      <div class="col-xl-3 col-md-6">
+        <div class="card bg-secondary-dark dashnum-card text-white overflow-hidden">
+          <span class="round small"></span><span class="round big"></span>
+          <div class="card-body">
+            <span class="d-block f-34 f-w-500 my-2">
+              {{ total_publications }}
+              <i class="ti ti-notebook opacity-50"></i>
+            </span>
+            <p class="mb-0 opacity-50">Total Publikasi</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL TEACHERS -->
+      <div class="col-xl-3 col-md-6">
+        <div class="card bg-secondary-dark dashnum-card text-white overflow-hidden">
+          <span class="round small"></span><span class="round big"></span>
+          <div class="card-body">
+            <span class="d-block f-34 f-w-500 my-2">
+              {{ total_teachers }}
+              <i class="ti ti-users opacity-50"></i>
+            </span>
+            <p class="mb-0 opacity-50">Guru & Staf</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL MATERIALS -->
+      <div class="col-xl-3 col-md-6">
+        <div class="card bg-secondary-dark dashnum-card text-white overflow-hidden">
+          <span class="round small"></span><span class="round big"></span>
+          <div class="card-body">
+            <span class="d-block f-34 f-w-500 my-2">{{ total_materials }}
+              <i class="ti ti-file-text opacity-50"></i>
+            </span>
+            <p class="mb-0 opacity-50">Materi E-Learning</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL GALLERY -->
+      <div class="col-xl-3 col-md-6">
+        <div class="card bg-secondary-dark dashnum-card text-white overflow-hidden">
+          <span class="round small"></span><span class="round big"></span>
+          <div class="card-body">
+            <span class="d-block f-34 f-w-500 my-2">{{ total_gallery }}
+              <i class="ti ti-photo opacity-50"></i>
+            </span>
+            <p class="mb-0 opacity-50">Galeri</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL CONTACTS -->
+      <div class="col-xl-3 col-md-6">
+        <div class="card bg-secondary-dark dashnum-card text-white overflow-hidden">
+          <span class="round small"></span><span class="round big"></span>
+          <div class="card-body">
+            <span class="d-block f-34 f-w-500 my-2">{{ total_contacts }}
+              <i class="ti ti-mail opacity-50"></i>
+            </span>
+            <p class="mb-0 opacity-50">Pesan Masuk</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL ADMIN -->
+      <div class="col-xl-3 col-md-6">
+        <div class="card bg-secondary-dark dashnum-card text-white overflow-hidden">
+          <span class="round small"></span><span class="round big"></span>
+          <div class="card-body">
+            <span class="d-block f-34 f-w-500 my-2">{{ total_admins }}
+              <i class="ti ti-shield-check opacity-50"></i>
+            </span>
+            <p class="mb-0 opacity-50">Admin Aktif</p>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- NOTIFIKASI TERBARU: PESAN MASUK -->
+      <div class="mt-5">
+        <h5>Pesan Masuk Terbaru</h5>
+        <ul class="list-group">
+          {% for msg in latest_notifications %}
+            <li class="list-group-item">
+              <i class="ti ti-mail text-primary me-2"></i>
+              <strong>{{ msg.name }}</strong> mengirim pesan:
+              <span class="text-muted fst-italic">
+                "{{ msg.message[:135] }}{% if msg.message|length > 135 %}...{% endif %}"
+              </span>
+              <br>
+              <small class="text-muted">
+                <i class="ti ti-calendar"></i> {{ msg.created_at.strftime('%d %b %Y %H:%M') }}
+              </small>
+            </li>
+          {% else %}
+            <li class="list-group-item text-muted">Tidak ada pesan terbaru.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- AKTIVITAS TERAKHIR ADMIN -->
+      <div class="mt-4">
+        <h5>Aktivitas Terakhir Admin</h5>
+        <ul class="list-group">
+          {% for log in recent_admin_logs %}
+            <li class="list-group-item">
+              <i class="ti ti-activity text-success me-2"></i>
+              {{ log.username }} melakukan 
+              <strong>
+                {{ log.action[:125] }}{% if log.action|length > 125 %}...{% endif %}
+              </strong>
+              pada {{ log.timestamp.strftime('%d %b %Y %H:%M') }}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- SPASI TAMBAHAN -->
+      <div class="mb-5"></div>
+      
+    </div>
+  </div>
+</div>
+
+{% include "admin/components/footer.html" %}

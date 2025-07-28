@@ -1,0 +1,209 @@
+{% include "user/components/header.html" %}
+{% include "user/components/navbar.html" %}
+
+<!-- Header Start -->
+<div class="container-fluid mb-5 p-0"
+     style="background-image: url('{{ url_for('static', filename='images/headers/' ~ settings.header_image) }}'); background-size: cover; background-position: center;">
+    <div class="d-flex flex-column align-items-center justify-content-center"
+         style="height: 400px; background-color: rgba(0, 0, 0, 0.5);">
+        <h3 class="display-3 font-weight-bold text-white">Detail Informasi</h3>
+        <div class="d-inline-flex text-white">
+            <p class="m-0"><a class="text-white" href="{{ url_for('home') }}">Beranda</a></p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0"><a class="text-white" href="{{ url_for('news_articles') }}">Informasi</a></p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">Detail Informasi</p>
+        </div>
+    </div>
+</div>
+<!-- Header End -->
+
+<!-- Detail Start -->
+<div class="container py-5">
+    <div class="row pt-5">
+        <!-- Kolom Kiri: Isi Utama Detail Artikel -->
+        <div class="col-lg-8">
+            <!-- Judul dan Meta -->
+            <div class="d-flex flex-column text-left mb-3">
+                <p class="section-title pr-5"><span class="pr-2">Halaman Detail Informasi</span></p>
+                <h3 class="mb-5">{{ article.title }}</h3>
+                <div class="d-flex">
+                    <p class="mr-3">
+                      <i class="fa fa-calendar text-primary"></i>
+                      {{ article.created_at.strftime('%d %b %Y %H:%M') }}
+                    </p>
+                    <p class="mr-3">
+                      <i class="fa fa-user text-primary"></i> {{ article.author }}
+                    </p>
+                    <p class="mr-3">
+                      <i class="fa fa-comments text-primary"></i>
+                      {{ comments|length }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Gambar Utama -->
+            <div class="mb-5">
+                {% if article.feature_image %}
+                    <img class="img-fluid rounded w-100 mb-4"
+                         src="{{ url_for('static', filename='images/publications/' + article.feature_image) }}"
+                         alt="Feature Image">
+                {% else %}
+                    <img class="img-fluid rounded w-100 mb-4"
+                         src="/static/user/img/detail.jpg"
+                         alt="Image">
+                {% endif %}
+
+                {# Konten utama artikel (HTML aman) #}
+                <div class="article-content" style="text-align: justify;">
+                  {{ article.content|safe }}
+                </div>
+
+                {% if article.attachment %}
+                <div class="mt-4">
+                    <h5>Lampiran:</h5>
+
+                    <div class="pdf-embed-wrapper mb-2">
+                    <embed 
+                        src="{{ url_for('static', filename='images/publications/' + article.attachment) }}#toolbar=0" 
+                        type="application/pdf" 
+                        width="500px"    
+                        height="400px"> 
+                    </div>
+                    <a href="{{ url_for('static', filename='images/publications/' + article.attachment) }}"
+                    target="_blank"
+                    class="btn btn-outline-primary mb-3">
+                    Unduh Lampiran: {{ article.attachment }}
+                    </a>
+
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Related Post -->
+            <div class="mb-5 mx-n3">
+                <h3 class="mb-4 ml-3">Postingan Terkait</h3>
+                <div class="owl-carousel post-carousel position-relative">
+                    {% for related in related_posts %}
+                        <div class="d-flex align-items-center bg-light shadow-sm rounded overflow-hidden mx-3">
+                            {% if related.feature_image %}
+                                <img class="img-fluid"
+                                     src="{{ url_for('static', filename='images/publications/' + related.feature_image) }}"
+                                     style="width: 80px; height: 80px;">
+                            {% else %}
+                                <img class="img-fluid"
+                                     src="/static/user/img/post-1.jpg"
+                                     style="width: 80px; height: 80px;">
+                            {% endif %}
+                            <div class="pl-3">
+                                {% set related_title = related.title[:35] + ('...' if related.title|length > 35 else '') %}
+                                <h6 class="mb-1">
+                                  <a href="{{ url_for('single', article_id=related._id) }}">
+                                    {{ related_title }}
+                                  </a>
+                                </h6>
+                                <div class="d-flex">
+                                    <small class="mr-3"><i class="fa fa-folder text-primary"></i> {{ related.created_at.strftime('%d %b %Y %H:%M') }}</small>
+                                    <small class="mr-3"><i class="fa fa-comments text-primary"></i> {{ related.comments_count }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Comment List -->
+            <div class="mb-5">
+                <h3 class="mb-4">{{ comments|length }} Komentar</h3>
+                {% for comment in comments %}
+                    <div class="media mb-4">
+                        <img src="{{ comment.avatar_url if comment.avatar_url else '/static/images/default_admin.jpg' }}"
+                             alt="Image"
+                             class="img-fluid rounded-circle mr-3 mt-1"
+                             style="width: 45px;">
+                        <div class="media-body">
+                            <h6>{{ comment.name }} <small><i>{{ comment.created_at_formatted }}</i></small></h6>
+                            <p>{{ comment.text }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Comment Form -->
+            <div class="bg-light p-5">
+                <h2 class="mb-4">Berikan komentar</h2>
+                <form method="POST" action="{{ url_for('single', article_id=article._id) }}">
+                    <div class="form-group mb-3">
+                        <label for="commentName">Nama *</label>
+                        <input type="text"
+                               class="form-control"
+                               id="commentName"
+                               name="name"
+                               placeholder="Your name"
+                               required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="commentEmail">Email *</label>
+                        <input type="email"
+                               class="form-control"
+                               id="commentEmail"
+                               name="email"
+                               placeholder="Your email"
+                               required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="commentMessage">Pesan *</label>
+                        <textarea id="commentMessage"
+                                  cols="30" rows="5"
+                                  class="form-control"
+                                  name="message"
+                                  placeholder="Your comment..."
+                                  required></textarea>
+                    </div>
+                    <div class="form-group mb-0">
+                        <input type="submit"
+                               value="Posting Komentar"
+                               class="btn btn-primary px-3">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan: Sidebar (Latest Posts) -->
+        <div class="col-lg-4 mt-5 mt-lg-0">
+            <div class="mb-5">
+                <h2 class="mb-4">Postingan Terbaru</h2>
+                {% for post in latest_posts %}
+                    <div class="d-flex align-items-center bg-light shadow-sm rounded overflow-hidden mb-3">
+                        {% if post.feature_image %}
+                            <img class="img-fluid"
+                                 src="{{ url_for('static', filename='images/publications/' + post.feature_image) }}"
+                                 style="width: 80px; height: 80px;">
+                        {% else %}
+                            <img class="img-fluid"
+                                 src="/static/user/img/detail.jpg"
+                                 style="width: 80px; height: 80px;">
+                        {% endif %}
+                        <div class="pl-3">
+                            {% set post_title = post.title[:35] + ('...' if post.title|length > 35 else '') %}
+                            <h6 class="mb-1">
+                                <a href="{{ url_for('single', article_id=post._id) }}">
+                                    {{ post_title }}
+                                </a>
+                            </h6>
+                            <p>
+                                <small>
+                                    <i class="fa fa-calendar text-primary"></i> {{ post.created_at.strftime('%d %b %Y %H:%M') }} &nbsp;
+                                    <i class="fa fa-comments text-primary"></i> {{ post.comment_count if post.comment_count is defined else 0 }}
+                                </small></p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+    </div>
+</div>
+<!-- Detail End -->
+
+{% include "user/components/footer.html" %}

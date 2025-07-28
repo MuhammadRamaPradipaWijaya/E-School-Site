@@ -1,0 +1,50 @@
+<!-- Navbar Start -->
+<div class="container-fluid bg-light shadow sticky-top">
+    <nav class="navbar navbar-expand-lg bg-light navbar-light py-3 py-lg-0 px-0 px-lg-5">
+        <a href="{{ url_for('home') }}"
+            class="navbar-brand font-weight-bold text-secondary"
+            style="font-size: 25px;">
+            {% if settings.school_logo %}
+                <img src="{{ url_for('static', filename='images/logos/' + settings.school_logo) }}"
+                    alt="{{ settings.school_name or 'School Logo' }}"
+                    style="height: 100px;">
+            {% else %}
+                <div class="text-muted fst-italic">Belum ada gambar.</div>
+            {% endif %}
+            <span class="text-primary">
+                {{ settings.school_name or 'SMP NEGERI 1 JATIROTO' }}
+            </span>
+        </a>
+
+
+        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
+            <div class="navbar-nav font-weight-bold mx-auto py-0">
+                <a href="{{ url_for('home') }}" class="nav-item nav-link {% if active_page == 'home' %}active{% endif %}">Beranda</a>
+                <a href="{{ url_for('about') }}" class="nav-item nav-link {% if active_page == 'about' %}active{% endif %}">Tentang</a>
+                <a href="{{ url_for('news_articles') }}" class="nav-item nav-link {% if active_page == 'news_articles' %}active{% endif %}">Informasi</a>
+
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle  {% if active_page in ['extracurricular_page', 'materials_classes'] %}active{% endif %}" data-toggle="dropdown">Akademik</a>
+                    <div class="dropdown-menu rounded-0 m-0">
+                        <a href="{{ url_for('materials_classes') }}"
+                        class="dropdown-item {% if active_page == 'materials_classes' %}active{% endif %}">
+                        E-Learning
+                        </a>
+                        <a href="{{ url_for('extracurricular_page') }}"
+                        class="dropdown-item {% if active_page == 'extracurricular_page' %}active{% endif %}">
+                        Ekstrakurikuler
+                        </a>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('teachers') }}" class="nav-item nav-link {% if active_page == 'teacher' %}active{% endif %}">Guru & Staf</a>
+                <a href="{{ url_for('gallery') }}" class="nav-item nav-link {% if active_page == 'gallery' %}active{% endif %}">Galeri</a>
+                <a href="{{ url_for('contact') }}" class="nav-item nav-link {% if active_page == 'contact' %}active{% endif %}">Kontak</a>
+            </div>
+        </div>
+    </nav>
+</div>
+<!-- Navbar End -->

@@ -1,0 +1,639 @@
+{# templates/admin/teachers.html #}
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+
+    <!-- Page Header dengan tombol “Add Teacher” -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+      <h4 class="page-title mb-0">Manajemen Guru & Staf</h4>
+      <button
+        type="button"
+        class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#addTeacherModal"
+      >
+        <i class="ti ti-user-plus me-1"></i> Tambah Guru
+      </button>
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Beranda</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Guru & Staf</li>
+        </ol>
+      </nav>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Tabel Daftar Guru -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="table-responsive">
+          <form method="get" class="mb-3 d-flex justify-content-end">
+            <input type="text" name="search" class="form-control w-auto me-2" placeholder="Cari nama, ID, email..." value="{{ search_query }}">
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="ti ti-search"></i> Cari
+            </button>
+          </form>
+          <table class="table table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>No.</th>
+                <th>Foto</th>
+                <th>NIP</th>
+                <th>Nama</th>
+                <th>Posisi</th>
+                <th>Email</th>
+                <th>Telepon</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if teachers_display %}
+                {% for teacher in teachers_display %}
+                  <tr>
+                    <td>{{ (page-1)*per_page + loop.index }}</td>
+                    <td class="text-center">
+                      {% if teacher.avatar %}
+                        <img
+                          src="{{ url_for('static', filename='images/teachers/' + teacher.avatar) }}"
+                          alt="{{ teacher.name }}"
+                          class="rounded-circle"
+                          style="width: 50px; height: 50px; object-fit: cover;"
+                        />
+                      {% else %}
+                        <img
+                          src="{{ url_for('static', filename='images/teachers/default_teacher.png') }}"
+                          alt="{{ teacher.name }}"
+                          class="rounded-circle"
+                          style="width: 50px; height: 50px; object-fit: cover;"
+                        />
+                      {% endif %}
+                    </td>
+                    <td>{{ teacher.teacher_id }}</td>
+                    {% set teacher_name = teacher.name[:50] + ('...' if teacher.name|length > 50 else '') %}
+                    <td>{{ teacher_name }}</td>
+                    <td>{{ teacher.position or teacher.subject }}</td>
+                    <td>{{ teacher.email or '-' }}</td>
+                    <td>{{ teacher.phone or '-' }}</td>
+                    <td>
+                      <!-- Detail Button -->
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-info me-1"
+                        data-bs-toggle="modal"
+                        data-bs-target="#detailTeacherModal-{{ teacher.teacher_id }}"
+                        title="View Details"
+                      >
+                        <i class="ti ti-eye"></i>
+                      </button>
+                      <!-- Edit Button -->
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-warning me-1"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editTeacherModal-{{ teacher.teacher_id }}"
+                        title="Edit Teacher"
+                      >
+                        <i class="ti ti-edit-circle"></i>
+                      </button>
+                      <!-- Delete Button -->
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteTeacherModal-{{ teacher.teacher_id }}"
+                        title="Delete Teacher"
+                      >
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="8" class="text-center">
+                    Tidak ada guru yang ditemukan. Klik 'Tambah Guru' untuk menambahkan.
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <nav aria-label="Teachers pagination">
+            <ul class="pagination justify-content-center mt-3">
+              {% if page > 1 %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('admin_teachers', page=page-1, search=search) }}">&laquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+              {% endif %}
+
+              {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                  <a class="page-link" href="{{ url_for('admin_teachers', page=p, search=search) }}">{{ p }}</a>
+                </li>
+              {% endfor %}
+
+              {% if page < total_pages %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('admin_teachers', page=page+1, search=search) }}">&raquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+
+        </div>
+      </div>
+    </div>
+    <!-- End Tabel Daftar Guru -->
+
+  </div>
+  <!-- End .pc-content -->
+</div>
+<!-- End .pc-container -->
+
+{% include "admin/components/footer.html" %}
+
+
+<!-- ================================================== -->
+<!-- MODAL: ADD TEACHER -->
+<!-- ================================================== -->
+<div
+  class="modal fade"
+  id="addTeacherModal"
+  tabindex="-1"
+  aria-labelledby="addTeacherModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addTeacherModalLabel">Tambah Guru</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <form method="POST" action="{{ url_for('add_teacher') }}" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="addTeacherID" class="form-label">NIP</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addTeacherID"
+              name="teacher_id"
+              placeholder="Masukkan NIP Guru"
+              required
+            />
+            <div class="form-text">Silakan isi NIP (contoh: '19826358 246367 2 007').</div>
+          </div>
+          <div class="mb-3">
+            <label for="addName" class="form-label">Nama</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addName"
+              name="name"
+              placeholder="Masukkan nama guru"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="addPosition" class="form-label">Posisi</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addPosition"
+              name="position"
+              placeholder="Masukkan posisi guru"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="addEmail" class="form-label">Email (opsional)</label>
+            <input
+              type="email"
+              class="form-control"
+              id="addEmail"
+              name="email"
+              placeholder="guru@example.com"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="addPhone" class="form-label">Telepon (Opsional)</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addPhone"
+              name="phone"
+              placeholder="Contoh: +62-812-3456-7890"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="addInstagram" class="form-label">Instagram URL</label>
+            <input
+              type="url"
+              class="form-control"
+              id="addInstagram"
+              name="instagram"
+              placeholder="https://instagram.com/username"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="addFacebook" class="form-label">Facebook URL</label>
+            <input
+              type="url"
+              class="form-control"
+              id="addFacebook"
+              name="facebook"
+              placeholder="https://facebook.com/username"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="addLinkedin" class="form-label">LinkedIn URL</label>
+            <input
+              type="url"
+              class="form-control"
+              id="addLinkedin"
+              name="linkedin"
+              placeholder="https://linkedin.com/in/username"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="addAvatar" class="form-label">Foto</label>
+            <input
+              class="form-control"
+              type="file"
+              id="addAvatar"
+              name="avatar"
+              accept="image/*"
+            />
+            <div class="form-text">Opsional. Unggah JPG/PNG.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% if teachers %}
+  {% for teacher in teachers %}
+    <!-- =============================== -->
+    <!-- MODAL: DETAIL TEACHER -->
+    <!-- =============================== -->
+    <div
+      class="modal fade"
+      id="detailTeacherModal-{{ teacher.teacher_id }}"
+      tabindex="-1"
+      aria-labelledby="detailTeacherModalLabel-{{ teacher.teacher_id }}"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5
+              class="modal-title"
+              id="detailTeacherModalLabel-{{ teacher.teacher_id }}"
+            >
+              Detail Guru (NIP: {{ teacher.teacher_id }})
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+
+          <<div class="modal-body text-center">
+            <div class="mb-3">
+              {% if teacher.avatar %}
+                <img
+                  src="{{ url_for('static', filename='images/teachers/' + teacher.avatar) }}"
+                  alt="{{ teacher.name }}"
+                  class="rounded-circle"
+                  style="width: 120px; height: 120px; object-fit: cover;"
+                />
+              {% else %}
+                <img
+                  src="{{ url_for('static', filename='images/teachers/default_teacher.png') }}"
+                  alt="{{ teacher.name }}"
+                  class="rounded-circle"
+                  style="width: 120px; height: 120px; object-fit: cover;"
+                />
+              {% endif %}
+            </div>
+
+            <table class="table table-borderless text-start mx-auto" style="max-width: 400px;">
+              <tr>
+                <th>Nama</th>
+                <td>: {{ teacher.name }}</td>
+              </tr>
+              <tr>
+                <th>Posisi</th>
+                <td>: {{ teacher.position or teacher.subject }}</td>
+              </tr>
+              {% if teacher.email %}
+              <tr>
+                <th>Email</th>
+                <td>: {{ teacher.email }}</td>
+              </tr>
+              {% endif %}
+              {% if teacher.phone %}
+              <tr>
+                <th>Telepon</th>
+                <td>: {{ teacher.phone }}</td>
+              </tr>
+              {% endif %}
+              {% if teacher.created_at %}
+              <tr>
+                <th>Joined On</th>
+                <td>: {{ teacher.created_at.strftime('%d %b %Y %H:%M') }}</td>
+              </tr>
+              {% endif %}
+              {% if teacher.instagram or teacher.facebook or teacher.linkedin %}
+              <tr>
+                <th>Media Sosial</th>
+                <td>: 
+                  {% if teacher.instagram %}
+                    <a href="{{ teacher.instagram }}" target="_blank" class="btn btn-outline-primary btn-sm me-1">
+                      <i class="fab fa-instagram"></i>
+                    </a>
+                  {% endif %}
+                  {% if teacher.facebook %}
+                    <a href="{{ teacher.facebook }}" target="_blank" class="btn btn-outline-primary btn-sm me-1">
+                      <i class="fab fa-facebook-f"></i>
+                    </a>
+                  {% endif %}
+                  {% if teacher.linkedin %}
+                    <a href="{{ teacher.linkedin }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                      <i class="fab fa-linkedin-in"></i>
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endif %}
+            </table>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- MODAL: EDIT TEACHER -->
+    <!-- =============================== -->
+    <div
+      class="modal fade"
+      id="editTeacherModal-{{ teacher.teacher_id }}"
+      tabindex="-1"
+      aria-labelledby="editTeacherModalLabel-{{ teacher.teacher_id }}"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5
+              class="modal-title"
+              id="editTeacherModalLabel-{{ teacher.teacher_id }}"
+            >
+              Edit Guru (NIP: {{ teacher.teacher_id }})
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <form
+            method="POST"
+            action="{{ url_for('edit_teacher', orig_teacher_id=teacher.teacher_id) }}"
+            enctype="multipart/form-data"
+          >
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="editTeacherID-{{ teacher.teacher_id }}" class="form-label"
+                  >NIP</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editTeacherID-{{ teacher.teacher_id }}"
+                  name="teacher_id"
+                  value="{{ teacher.teacher_id }}"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editName-{{ teacher.teacher_id }}" class="form-label"
+                  >Nama</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editName-{{ teacher.teacher_id }}"
+                  name="name"
+                  value="{{ teacher.name }}"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editPosition-{{ teacher.teacher_id }}" class="form-label"
+                  >Posisi</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editPosition-{{ teacher.teacher_id }}"
+                  name="position"
+                  value="{{ teacher.position or teacher.subject }}"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editEmail-{{ teacher.teacher_id }}" class="form-label"
+                  >Email (opsional)</label
+                >
+                <input
+                  type="email"
+                  class="form-control"
+                  id="editEmail-{{ teacher.teacher_id }}"
+                  name="email"
+                  value="{{ teacher.email or '' }}"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editPhone-{{ teacher.teacher_id }}" class="form-label"
+                  >Telepon (optional)</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editPhone-{{ teacher.teacher_id }}"
+                  name="phone"
+                  value="{{ teacher.phone or '' }}"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editInstagram-{{ teacher.teacher_id }}" class="form-label"
+                  >Instagram URL</label
+                >
+                <input
+                  type="url"
+                  class="form-control"
+                  id="editInstagram-{{ teacher.teacher_id }}"
+                  name="instagram"
+                  value="{{ teacher.instagram or '' }}"
+                  placeholder="https://instagram.com/username"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editFacebook-{{ teacher.teacher_id }}" class="form-label"
+                  >Facebook URL</label
+                >
+                <input
+                  type="url"
+                  class="form-control"
+                  id="editFacebook-{{ teacher.teacher_id }}"
+                  name="facebook"
+                  value="{{ teacher.facebook or '' }}"
+                  placeholder="https://facebook.com/username"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editLinkedin-{{ teacher.teacher_id }}" class="form-label"
+                  >LinkedIn URL</label
+                >
+                <input
+                  type="url"
+                  class="form-control"
+                  id="editLinkedin-{{ teacher.teacher_id }}"
+                  name="linkedin"
+                  value="{{ teacher.linkedin or '' }}"
+                  placeholder="https://linkedin.com/in/username"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editAvatar-{{ teacher.teacher_id }}" class="form-label"
+                  >Foto</label
+                >
+                <input
+                  class="form-control"
+                  type="file"
+                  id="editAvatar-{{ teacher.teacher_id }}"
+                  name="avatar"
+                  accept="image/*"
+                />
+                <div class="form-text">Biarkan kosong jika tidak ingin mengganti foto.</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Batal
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Simpan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- MODAL: DELETE TEACHER -->
+    <!-- =============================== -->
+    <div
+      class="modal fade"
+      id="deleteTeacherModal-{{ teacher.teacher_id }}"
+      tabindex="-1"
+      aria-labelledby="deleteTeacherModalLabel-{{ teacher.teacher_id }}"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5
+              class="modal-title text-danger"
+              id="deleteTeacherModalLabel-{{ teacher.teacher_id }}"
+            >
+              Hapus Guru
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            Apakah Anda yakin ingin menghapus <strong>{{ teacher.name }}</strong>
+            (NIP: {{ teacher.teacher_id }})?
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Hapus
+            </button>
+            <form
+              method="POST"
+              action="{{ url_for('delete_teacher', teacher_id=teacher.teacher_id) }}"
+            >
+              <button type="submit" class="btn btn-danger">
+                Ya, Hapus
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}

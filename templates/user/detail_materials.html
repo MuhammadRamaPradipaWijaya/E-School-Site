@@ -1,0 +1,180 @@
+{% include "user/components/header.html" %}
+{% include "user/components/navbar.html" %}
+
+{# ───────────── Hero Header ───────────── #}
+<div class="container-fluid mb-5 p-0"
+     style="background-image: url('{{ url_for('static', filename='images/headers/' ~ settings.header_image) }}'); background-size: cover; background-position: center;">
+  <div class="d-flex flex-column align-items-center justify-content-center"
+       style="height: 400px; background-color: rgba(0,0,0,.5);">
+    <h3 class="display-3 font-weight-bold text-white">{{ material.title }}</h3>
+    <div class="d-inline-flex text-white">
+      <a class="text-white" href="{{ url_for('home') }}">Beranda</a>
+      <span class="mx-2">></span>
+      <a class="text-white" href="{{ url_for('materials_classes') }}">E-Learning</a>
+      <span class="mx-2">></span>
+      <a class="text-white"
+         href="{{ url_for('materials_subjects', class_id=class_id) }}">{{ class_title }}</a>
+      <span class="mx-2">></span>
+      <a class="text-white"
+         href="{{ url_for('materials', subject_id=subject._id) }}">{{ subject.title }}</a>
+      <span class="mx-2">></span>
+      <span>{{ material.title }}</span>
+    </div>
+  </div>
+</div>
+
+{# ───────────── Material Detail ───────────── #}
+<div class="container py-5">
+
+  <div class="row">
+    {# Left : Preview for each file or video_link #}
+    <div class="col-lg-8 mb-4 mb-lg-0">
+      {% if material.filenames %}
+        {% for fn in material.filenames %}
+          {% set ext = fn.rsplit('.',1)[1].lower() %}
+          {% if ext == 'pdf' %}
+            <div class="border rounded overflow-hidden mb-4" style="height:600px;">
+              <iframe src="{{ url_for('static', filename='images/materials/' + fn) }}"
+                      class="w-100 h-100" style="border:0;"></iframe>
+            </div>
+          {% elif ext == 'mp4' %}
+            <video controls class="w-100 rounded mb-4 shadow">
+              <source src="{{ url_for('static', filename='images/materials/' + fn) }}" type="video/mp4">
+            </video>
+          {% else %}
+            <div class="text-center mb-4">
+              <i class="fa fa-file-alt fa-5x text-secondary"></i>
+              <p class="mt-2">{{ ext|upper }} file – <a href="{{ url_for('static', filename='images/materials/' + fn) }}" target="_blank">Unduh</a></p>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      {% if not material.filenames and not material.video_link %}
+        <div class="alert alert-secondary text-center">
+          Pratinjau tidak tersedia.
+        </div>
+      {% endif %}
+    </div>
+
+    {# Right : Meta / actions ———— #}
+    <div class="col-lg-4">
+      <div class="card shadow-sm style="position: relative;"">
+        <div class="card-body">
+          <h4 class="card-title" style="text-align: justify;">{{ material.title }}</h4>
+          {% if material.description %}
+            <p class="text-muted" style="text-align: justify;">
+              {{ material.description
+                | replace('\r\n','\n')
+                | replace('\n','<br>')
+                | safe
+              }}
+            </p>
+          {% endif %}
+
+
+          <ul class="list-group list-group-flush small mb-3">
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Kelas</span><strong>{{ class_title }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Mapel</span><strong>{{ subject.title }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Diunggah</span><strong>{{ material.created_at.strftime('%d %b %Y') }}</strong>
+            </li>
+          </ul>
+
+          {% if material.filenames %}
+            <label class="form-label">Unduh Berkas</label>
+            <div class="d-grid gap-2 mb-3">
+              {% for fn in material.filenames %}
+                <a href="{{ url_for('static', filename='images/materials/' + fn) }}"
+                   class="btn btn-primary btn-sm text-truncate"
+                   target="_blank">{{ fn }}</a>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if material.video_link %}
+            <!-- Watch Video button -->
+            <button type="button"
+                    class="btn btn-danger w-100 mb-3"
+                    data-bs-toggle="modal"
+                    data-bs-target="#watchVideoModal">
+              <i class="fa fa-play-circle me-1"></i> Tonton Video
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# --- More materials in same subject --- #}
+  {% if more_materials %}
+  <hr class="my-5">
+  <h3 class="mb-4">Materi Lainnya di {{ subject.title }}</h3>
+  <div class="row">
+    {% for m2 in more_materials %}
+      <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-truncate">{{ m2.title }}</h6>
+            <p class="small text-muted mb-2">{{ m2.created_at.strftime('%d %b %Y') }}</p>
+            <a href="{{ url_for('detail_material', material_id=m2._id) }}" class="stretched-link"></a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- your modal -->
+<div class="modal fade" id="watchVideoModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ material.title }}</h5>
+        <!-- use the white X if your header is dark -->
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+          aria-label="Close">
+        </button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe
+          id="watchVideoIframe"
+          src="{{ material.video_link }}"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          style="width:100%; height:50vh; border:0;">
+        </iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    var modalEl = document.getElementById('watchVideoModal');
+    var iframe  = document.getElementById('watchVideoIframe');
+    var src     = iframe.getAttribute('src');
+
+    modalEl.addEventListener('hidden.bs.modal', function(){
+      // clear src to stop playback
+      iframe.setAttribute('src','');
+      // restore it for next time
+      setTimeout(function(){
+        iframe.setAttribute('src', src);
+      }, 0);
+    });
+  });
+</script>
+
+
+
+{% include "user/components/footer.html" %}

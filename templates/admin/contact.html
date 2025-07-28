@@ -1,0 +1,209 @@
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+      <h4 class="page-title mb-0">Manajemen Kontak</h4>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Beranda</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Kontak</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- Table Section -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Pesan Kontak Masuk</h5>
+      </div>
+      <div class="card-body">
+        {% if contact_messages %}
+          <div class="table-responsive">
+            <form method="get" class="mb-3 d-flex justify-content-end">
+              <input type="text" name="search" class="form-control w-auto me-2" placeholder="Cari nama, email, or subjek..." value="{{ search_query }}">
+              <button class="btn btn-outline-primary" type="submit">
+                <i class="ti ti-search"></i> Cari
+              </button>
+            </form>
+            <table class="table table-bordered table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>No</th>
+                  <th>Nama</th>
+                  <th>Email</th>
+                  <th>Subjek</th>
+                  <th>Pesan</th>
+                  <th>Dikirim Pada</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if contact_messages %}
+                  {% for msg in contact_messages %}
+                    <tr>
+                      <td>{{ (page - 1) * per_page + loop.index }}</td>
+                      <td>{{ msg.name }}</td>
+                      <td>{{ msg.email }}</td>
+                      <td>{{ msg.subject }}</td>
+                      <td style="max-width: 200px;" class="text-truncate" title="{{ msg.message }}">{{ msg.message }}</td>
+                      <td>{{ msg.created_at.strftime('%d %B %Y %H:%M') }}</td>
+                      <td>
+                        <button type="button" class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewMessageModal-{{ msg._id }}" title="View">
+                          <i class="ti ti-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteMessageModal-{{ msg._id }}" title="Delete">
+                          <i class="ti ti-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="7" class="text-center">Tidak ada pesan kontak yang tersedia.</td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <nav aria-label="Contact messages pagination">
+              <ul class="pagination justify-content-center mt-3">
+                {% if page > 1 %}
+                  <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_contact', page=page-1, search=search) }}">&laquo;</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+
+                {% for p in range(1, total_pages + 1) %}
+                  <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin_contact', page=p, search=search) }}">{{ p }}</a>
+                  </li>
+                {% endfor %}
+
+                {% if page < total_pages %}
+                  <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_contact', page=page+1, search=search) }}">&raquo;</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+              </ul>
+            </nav>
+
+          </div>
+        {% else %}
+          <div class="alert alert-info mb-0 text-center">Tidak ada pesan kontak yang tersedia.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- View & Delete Modals -->
+    {% for msg in contact_messages %}
+      <!-- View Modal -->
+      <div class="modal fade" id="viewMessageModal-{{ msg._id }}" tabindex="-1" aria-labelledby="viewMessageModalLabel-{{ msg._id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Pesan dari {{ msg.name }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Email:</strong> {{ msg.email }}</p>
+              <p><strong>Subjek:</strong> {{ msg.subject }}</p>
+              <p><strong>Pesan:</strong></p>
+              <p>{{ msg.message }}</p>
+              <p class="text-muted small"><strong>Dikirim Pada:</strong> {{ msg.created_at.strftime('%d %B %Y %H:%M') }}</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Modal -->
+      <div class="modal fade" id="deleteMessageModal-{{ msg._id }}" tabindex="-1" aria-labelledby="deleteMessageModalLabel-{{ msg._id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title text-danger">Hapus Pesan</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              Apakah Anda yakin ingin menghapus pesan dari <strong>{{ msg.name }}</strong>?
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+              <form method="POST" action="{{ url_for('delete_contact_message', message_id=msg._id) }}">
+                <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Form -->
+    <div class="card">
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('update_contact') }}">
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label class="form-label">Alamat</label>
+              <input type="text" name="address" class="form-control" value="{{ contact.address or '' }}" required>
+            </div>
+            <div class="mb-3 col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control" value="{{ contact.email or '' }}" required>
+            </div>
+            <div class="mb-3 col-md-6">
+              <label class="form-label">Telepon</label>
+              <input type="text" name="phone" class="form-control" value="{{ contact.phone or '' }}" required>
+            </div>
+            <div class="mb-3 col-md-6">
+              <label class="form-label">Waktu Layanan</label>
+              <input type="text" name="hours" class="form-control" value="{{ contact.hours or '' }}" required>
+            </div>
+            <div class="mb-3 col-12">
+              <label class="form-label">URL Sematan Google Maps</label>
+              <input type="text" name="map_url" class="form-control" value="{{ contact.map_url or '' }}">
+              <small class="text-muted">Tempelkan URL sematan dari Google Maps (gunakan fitur "Embed a map").</small>
+            </div>
+            {% if contact.map_url %}
+            <div class="mb-3 col-12">
+              <label class="form-label d-block">Pratinjau Peta</label>
+              <div class="rounded shadow-sm overflow-hidden" style="height: 250px;">
+                <iframe class="w-100 h-100 border-0" src="{{ contact.map_url }}" allowfullscreen="" loading="lazy"></iframe>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          <div class="text-end">
+            <button type="submit" class="btn btn-primary">
+              <i class="ti ti-device-floppy"></i> Simpan
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "admin/components/footer.html" %}

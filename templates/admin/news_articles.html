@@ -1,0 +1,778 @@
+{# templates/admin/news_articles.html #}
+{% include "admin/components/header.html" %}
+
+  {% include "admin/components/sidebar.html" %}
+
+    {% include "admin/components/topbar.html" %}
+
+    <div class="pc-container">
+      <div class="pc-content">
+
+        <!-- Page Header -->
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+          <h4 class="page-title mb-0">Manajemen Publikasi</h4>
+
+          <!-- Add New Article Button -->
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addArticleModal"
+          >
+            <i class="ti ti-file-plus me-1"></i> Tambah Baru
+          </button>
+
+          <!-- Breadcrumb -->
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Beranda</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Publikasi</li>
+            </ol>
+          </nav>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Articles Table -->
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <form method="get" class="mb-3 d-flex justify-content-end">
+                <input type="text" name="search" class="form-control w-auto me-2" placeholder="Cari judul, kategori, pembuat..." value="{{ search_query }}">
+                <button class="btn btn-outline-primary" type="submit">
+                  <i class="ti ti-search"></i> Cari
+                </button>
+              </form>
+              <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>No.</th>
+                    <th>Judul</th>
+                    <th>Kategori</th>
+                    <th>Pembuat</th>
+                    <th>Diunggah Pada</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if articles_display %}
+                    {% for article in articles_display %}
+                      <tr>
+                        <td>{{ loop.index }}</td>
+                        {% set truncated_title = article.title[:50] + ('...' if article.title|length > 50 else '') %}
+                        <td>{{ truncated_title }}</td>
+                        <td>
+                          {% if article.category == 'News' %}
+                            Berita
+                          {% elif article.category == 'Event' %}
+                            Acara
+                          {% elif article.category == 'Announcement' %}
+                            Pengumuman
+                          {% elif article.category == 'Achievement' %}
+                            Prestasi
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                        <td>{{ article.author }}</td>
+                        <td>{{ article.created_at.strftime('%d %b %Y %H:%M')  }}</td>
+                        <td>
+                          <!-- View Details -->
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-info me-1"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewArticleModal-{{ article._id }}"
+                            title="View Details"
+                          ><i class="ti ti-eye"></i></button>
+
+                          <!-- Edit -->
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-warning me-1"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editArticleModal-{{ article._id }}"
+                            title="Edit Article"
+                          ><i class="ti ti-edit"></i></button>
+
+                          <!-- Delete -->
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteArticleModal-{{ article._id }}"
+                            title="Delete Article"
+                          ><i class="ti ti-trash"></i></button>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="6" class="text-center">
+                        Tidak ada artikel yang ditemukan. Klik 'Tambah Baru' untuk membuatnya.
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+
+              <!-- Pagination -->
+              <nav aria-label="Articles pagination">
+                <ul class="pagination justify-content-center mt-3">
+                  {% if page > 1 %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('admin_news_articles', page=page-1, search=search) }}">&laquo;</a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                  {% endif %}
+                  
+                  {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                      <a class="page-link" href="{{ url_for('admin_news_articles', page=p, search=search) }}">{{ p }}</a>
+                    </li>
+                  {% endfor %}
+
+                  {% if page < total_pages %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('admin_news_articles', page=page+1, search=search) }}">&raquo;</a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                  {% endif %}
+                </ul>
+              </nav>
+
+            </div>
+          </div>
+        </div>
+        <!-- End Articles Table -->
+
+      </div> {# /.pc-content #}
+    </div> {# /.pc-container #}
+
+
+
+{# ──────────────────────────────────────────────────────────────────────────── #}
+{#                         MODALS: ADD / VIEW / EDIT / DELETE                  #}
+{# ──────────────────────────────────────────────────────────────────────────── #}
+
+<!-- ======================================================================== -->
+<!-- 1) ADD NEW ARTICLE MODAL -->
+<!-- ======================================================================== -->
+<div class="modal fade" id="addArticleModal" tabindex="-1"
+     aria-labelledby="addArticleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addArticleModalLabel">Tambah Publikasi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                aria-label="Close"></button>
+      </div>
+
+      <form method="POST" action="{{ url_for('add_article') }}"
+            enctype="multipart/form-data">
+        <div class="modal-body">
+          <!-- Title -->
+          <div class="mb-3">
+            <label for="addTitle" class="form-label">Judul</label>
+            <input type="text"
+                   class="form-control"
+                   id="addTitle"
+                   name="title"
+                   placeholder="Masukkan judul artikel"
+                   required>
+          </div>
+
+          <!-- Category -->
+          <div class="mb-3">
+            <label for="addCategory" class="form-label">Kategori</label>
+            <select class="form-select" id="addCategory" name="category" required>
+              <option value="" selected disabled>-- Pilih Kategori --</option>
+              <option value="Achievement">Prestasi</option>
+              <option value="News">Berita</option>
+              <option value="Announcement">Pengumuman</option>
+              <option value="Event">Acara</option>
+            </select>
+          </div>
+
+          <!-- Feature Image -->
+          <div class="mb-3">
+            <label for="addFeatureImage" class="form-label">Gambar Utama</label>
+            <input class="form-control"
+                   type="file"
+                   id="addFeatureImage"
+                   name="feature_image"
+                   accept="image/*">
+            <div class="form-text">Opsional: Upload satu gambar (JPG/PNG).</div>
+          </div>
+
+          <!-- Content (Rich-Text) -->
+          <div class="mb-3">
+            <label class="form-label">Konten</label>
+            <div class="btn-toolbar mb-2" role="toolbar" aria-label="Formatting toolbar">
+              <!-- Tombol Bold / Italic / Underline / Strikethrough -->
+              <div class="btn-group me-1" role="group">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('bold','addContentEditable')"
+                        title="Bold (Ctrl+B)">
+                  <i class="ti ti-bold"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('italic','addContentEditable')"
+                        title="Italic (Ctrl+I)">
+                  <i class="ti ti-italic"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('underline','addContentEditable')"
+                        title="Underline (Ctrl+U)">
+                  <i class="ti ti-underline"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('strikeThrough','addContentEditable')"
+                        title="Strikethrough">
+                  <i class="ti ti-strikethrough"></i>
+                </button>
+              </div>
+              <!-- Tombol Alignment -->
+              <div class="btn-group me-1" role="group">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('justifyLeft','addContentEditable')"
+                        title="Align Left">
+                  <i class="ti ti-align-left"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('justifyCenter','addContentEditable')"
+                        title="Align Center">
+                  <i class="ti ti-align-center"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('justifyRight','addContentEditable')"
+                        title="Align Right">
+                  <i class="ti ti-align-right"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('justifyFull','addContentEditable')"
+                        title="Justify">
+                  <i class="ti ti-align-justified"></i>
+                </button>
+              </div>
+              <!-- Tombol List -->
+              <div class="btn-group me-1" role="group">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('insertUnorderedList','addContentEditable')"
+                        title="Bullet List">
+                  <i class="ti ti-list"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('insertOrderedList','addContentEditable')"
+                        title="Numbered List">
+                  <i class="ti ti-list-numbers"></i>
+                </button>
+              </div>
+              <!-- Tombol Insert Link / Image -->
+              <div class="btn-group me-1" role="group">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('createLink','addContentEditable', prompt('Enter URL:','http://'))"
+                        title="Insert Link">
+                  <i class="ti ti-link"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('insertImage','addContentEditable', prompt('Enter image URL:','http://'))"
+                        title="Insert Image">
+                  <i class="ti ti-unlink"></i>
+                </button>
+              </div>
+              <!-- Tombol Ukuran Teks (Font Size) -->
+              <div class="btn-group" role="group">
+                <!-- Contoh: ubah size jadi 1 (paling kecil) -->
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('fontSize','addContentEditable', '1')"
+                        title="Font Size Very Small">
+                  <small>A</small>
+                </button>
+                <!-- Contoh: ubah size jadi 3 (ukuran sedang/biasa) -->
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('fontSize','addContentEditable', '3')"
+                        title="Font Size Normal">
+                  <span>A</span>
+                </button>
+                <!-- Contoh: ubah size jadi 5 (lebih besar) -->
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        onclick="execCommandForId('fontSize','addContentEditable', '5')"
+                        title="Font Size Large">
+                  <strong>A</strong>
+                </button>
+              </div>
+            </div>
+
+            <!-- Div contenteditable -->
+            <div id="addContentEditable"
+                 contenteditable="true"
+                 class="border rounded p-2"
+                 style="height: 200px; overflow-y: auto; background-color: #fff;">
+            </div>
+            <!-- Hidden textarea untuk menyimpan HTML -->
+            <textarea name="content" id="addContentInput" hidden></textarea>
+          </div>
+
+          <!-- Di SINI tambahkan field Lampiran -->
+          <div class="mb-3">
+            <label for="addAttachment" class="form-label">Lampiran (berkas)</label>
+            <input class="form-control"
+                   type="file"
+                   id="addAttachment"
+                   name="attachment"
+                   accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+            <div class="form-text">Opsional: Unggah Lampiran (PDF/DOC/XLS/ZIP).</div>
+          </div>
+        </div>
+
+        <!-- Modal footer dengan tombol Save -->
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal">Batal</button>
+          <button type="submit"
+                  class="btn btn-primary"
+                  onclick="syncAddContent();">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- ======================================================================== -->
+<!-- 2) VIEW ARTICLE MODALS -->
+<!-- ======================================================================== -->
+{% if articles %}
+  {% for article in articles %}
+    <div class="modal fade"
+         id="viewArticleModal-{{ article._id }}"
+         tabindex="-1"
+         aria-labelledby="viewArticleModalLabel-{{ article._id }}"
+         aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"
+                id="viewArticleModalLabel-{{ article._id }}">
+              {{ article.title }}
+              <small class="text-muted ms-2">(
+                {% if article.category == 'News' %}
+                  Berita
+                {% elif article.category == 'Event' %}
+                  Acara
+                {% elif article.category == 'Announcement' %}
+                  Pengumuman
+                {% elif article.category == 'Achievement' %}
+                  Prestasi
+                {% else %}
+                  -
+                {% endif %}
+              )</small>
+            </h5>
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-1"><strong>Pembuat:</strong> {{ article.author }}</p>
+            <p class="mb-1"><strong>Dibuat Pada:</strong> {{ article.created_at.strftime('%d %b %Y %H:%M') }}</p>
+            {% if article.updated_at %}
+              <p class="mb-4"><strong>Terakhir Diubah:</strong> {{ article.updated_at.strftime('%d %b %Y %H:%M') }}</p>
+            {% endif %}
+            <hr>
+
+            {# Tampilkan feature_image (hanya satu) jika ada #}
+            {% if article.feature_image %}
+              <label class="form-label">Gambar Utama</label>
+              <ul class="list-group mb-3">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  {{ article.feature_image }}
+                  <button type="button" class="btn btn-sm btn-outline-primary"
+                          data-bs-toggle="collapse"
+                          data-bs-target="#viewArticleImageCollapse-{{ article._id }}">
+                    <i class="fa fa-image me-1"></i> Lihat Gambar
+                  </button>
+                </li>
+                <div class="collapse mt-2" id="viewArticleImageCollapse-{{ article._id }}">
+                  <img src="{{ url_for('static', filename='images/publications/' + article.feature_image) }}"
+                      class="img-fluid rounded border w-100">
+                </div>
+              </ul>
+            {% endif %}
+
+            {# Full content (HTML) #}
+            <div class="article-content">
+              {{ article.content|safe }}
+            </div>
+
+            <!-- Di dalam modal View Article -->
+            {% if article.attachment %}
+            <div class="mt-4">
+                <h5>Lampiran:</h5>
+
+                <div class="pdf-embed-wrapper mb-2">
+                <embed 
+                    src="{{ url_for('static', filename='images/publications/' + article.attachment) }}#toolbar=0" 
+                    type="application/pdf" 
+                    width="500px"    
+                    height="400px"> 
+                </div>
+
+            </div>
+            {% endif %}
+
+          </div>
+          <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+
+<!-- ======================================================================== -->
+<!-- 3) EDIT ARTICLE MODALS -->
+<!-- ======================================================================== -->
+{% if articles %}
+  {% for article in articles %}
+    <div class="modal fade"
+         id="editArticleModal-{{ article._id }}"
+         tabindex="-1"
+         aria-labelledby="editArticleModalLabel-{{ article._id }}"
+         aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"
+                id="editArticleModalLabel-{{ article._id }}">Edit Publikasi</h5>
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="modal"></button>
+          </div>
+
+          <form method="POST"
+                action="{{ url_for('edit_article', article_id=article._id) }}"
+                enctype="multipart/form-data">
+            <div class="modal-body">
+              <!-- Title -->
+              <div class="mb-3">
+                <label for="editTitle-{{ article._id }}" class="form-label">Judul</label>
+                <input type="text"
+                       class="form-control"
+                       id="editTitle-{{ article._id }}"
+                       name="title"
+                       value="{{ article.title }}"
+                       required>
+              </div>
+
+              <!-- Category -->
+              <div class="mb-3">
+                <label for="editCategory-{{ article._id }}" class="form-label">Kategori</label>
+                <select class="form-select"
+                        id="editCategory-{{ article._id }}"
+                        name="category"
+                        required>
+                  <option value="" disabled>-- Pilih Kategori --</option>
+                  <option value="Achievement" {% if article.category == 'Achievement' %}selected{% endif %}>Prestasi</option>
+                  <option value="News" {% if article.category == 'News' %}selected{% endif %}>Berita</option>
+                  <option value="Announcement" {% if article.category == 'Announcement' %}selected{% endif %}>Pengumuman</option>
+                  <option value="Event" {% if article.category == 'Event' %}selected{% endif %}>Acara</option>
+                </select>
+              </div>
+
+              <!-- Current Feature Image -->
+              {% if article.feature_image %}
+                <label class="form-label">Gambar Utama</label>
+                <ul class="list-group mb-3">
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ article.feature_image }}
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#viewArticleImageCollapse-{{ article._id }}">
+                      <i class="fa fa-image me-1"></i> Lihat Gambar
+                    </button>
+                  </li>
+                  <div class="collapse mt-2" id="viewArticleImageCollapse-{{ article._id }}">
+                    <img src="{{ url_for('static', filename='images/publications/' + article.feature_image) }}"
+                        class="img-fluid rounded border w-100">
+                  </div>
+                </ul>
+              {% endif %}
+
+              <!-- Replace Feature Image -->
+              <div class="mb-3">
+                <label for="editFeatureImage-{{ article._id }}" class="form-label">Ganti Gambar Utama</label>
+                <input class="form-control"
+                       type="file"
+                       id="editFeatureImage-{{ article._id }}"
+                       name="feature_image"
+                       accept="image/*">
+                <div class="form-text">Biarkan kosong jika tidak ingin mengganti gambar.</div>
+              </div>
+
+              <!-- Content (Rich-Text) -->
+              <div class="mb-3">
+                <label class="form-label">Konten</label>
+                <div class="btn-toolbar mb-2" role="toolbar" aria-label="Formatting toolbar">
+                  <!-- Tombol Bold / Italic / Underline / Strikethrough -->
+                  <div class="btn-group me-1" role="group">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('bold','editContentEditable-{{ article._id }}')"
+                            title="Bold (Ctrl+B)">
+                      <i class="ti ti-bold"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('italic','editContentEditable-{{ article._id }}')"
+                            title="Italic (Ctrl+I)">
+                      <i class="ti ti-italic"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('underline','editContentEditable-{{ article._id }}')"
+                            title="Underline (Ctrl+U)">
+                      <i class="ti ti-underline"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('strikeThrough','editContentEditable-{{ article._id }}')"
+                            title="Strikethrough">
+                      <i class="ti ti-strikethrough"></i>
+                    </button>
+                  </div>
+                  <!-- Tombol Alignment -->
+                  <div class="btn-group me-1" role="group">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('justifyLeft','editContentEditable-{{ article._id }}')"
+                            title="Align Left">
+                      <i class="ti ti-align-left"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('justifyCenter','editContentEditable-{{ article._id }}')"
+                            title="Align Center">
+                      <i class="ti ti-align-center"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('justifyRight','editContentEditable-{{ article._id }}')"
+                            title="Align Right">
+                      <i class="ti ti-align-right"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('justifyFull','editContentEditable-{{ article._id }}')"
+                            title="Justify">
+                      <i class="ti ti-align-justified"></i>
+                    </button>
+                  </div>
+                  <!-- Tombol List -->
+                  <div class="btn-group me-1" role="group">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('insertUnorderedList','editContentEditable-{{ article._id }}')"
+                            title="Bullet List">
+                      <i class="ti ti-list"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('insertOrderedList','editContentEditable-{{ article._id }}')"
+                            title="Numbered List">
+                      <i class="ti ti-list-numbers"></i>
+                    </button>
+                  </div>
+                  <!-- Tombol Insert Link / Image -->
+                  <div class="btn-group me-1" role="group">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('createLink','editContentEditable-{{ article._id }}', prompt('Enter URL:','http://'))"
+                            title="Insert Link">
+                      <i class="ti ti-link"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('insertImage','editContentEditable-{{ article._id }}', prompt('Enter image URL:','http://'))"
+                            title="Insert Image">
+                      <i class="ti ti-unlink"></i>
+                    </button>
+                  </div>
+                  <!-- Tombol Ukuran Teks (Font Size) -->
+                  <div class="btn-group" role="group">
+                    <!-- Ukuran kecil -->
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('fontSize','editContentEditable-{{ article._id }}', '1')"
+                            title="Font Size Very Small">
+                      <small>A</small>
+                    </button>
+                    <!-- Ukuran normal -->
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('fontSize','editContentEditable-{{ article._id }}', '3')"
+                            title="Font Size Normal">
+                      <span>A</span>
+                    </button>
+                    <!-- Ukuran besar -->
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="execCommandForId('fontSize','editContentEditable-{{ article._id }}', '5')"
+                            title="Font Size Large">
+                      <strong>A</strong>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Div contenteditable -->
+                <div id="editContentEditable-{{ article._id }}"
+                     contenteditable="true"
+                     class="border rounded p-2"
+                     style="height: 200px; overflow-y: auto; background-color: #fff;">
+                  {{ article.content|safe }}
+                </div>
+                <!-- Hidden textarea -->
+                <textarea name="content"
+                          id="editContentInput-{{ article._id }}"
+                          hidden></textarea>
+              </div>
+
+              <!-- Baru: Field Lampiran di bawah Content -->
+               {% if article.attachment %}
+                <div class="mt-4">
+                    <h5>Lampiran:</h5>
+
+                    <div class="pdf-embed-wrapper mb-2">
+                    <embed 
+                        src="{{ url_for('static', filename='images/publications/' + article.attachment) }}#toolbar=0" 
+                        type="application/pdf" 
+                        width="500px"    
+                        height="400px"> 
+                    </div>
+                </div>
+                {% endif %}
+              <div class="mb-3">
+                <label for="editAttachment-{{ article._id }}" class="form-label">Lampiran (file)</label>
+                <input class="form-control"
+                       type="file"
+                       id="editAttachment-{{ article._id }}"
+                       name="attachment"
+                       accept=".pdf,.doc,.docx,.xls,.xlsx,.zip">
+                <div class="form-text">Opsional: Ganti lampiran jika diperlukan.</div>
+              </div>
+
+            </div>
+
+            <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-secondary"
+                      data-bs-dismiss="modal">Batal</button>
+              <button type="submit"
+                      class="btn btn-primary"
+                      onclick="syncEditContent('{{ article._id }}');">Simpan</button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+
+<!-- ======================================================================== -->
+<!-- 4) DELETE ARTICLE MODALS -->
+<!-- ======================================================================== -->
+{% if articles %}
+  {% for article in articles %}
+    <div class="modal fade"
+         id="deleteArticleModal-{{ article._id }}"
+         tabindex="-1"
+         aria-labelledby="deleteArticleModalLabel-{{ article._id }}"
+         aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-danger" id="deleteArticleModalLabel-{{ article._id }}">
+              Hapus Publikasi
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            Apakah Anda yakin ingin menghapus <strong>{{ article.title }}</strong>?
+          </div>
+          <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">Batal</button>
+            <form method="POST" action="{{ url_for('delete_article', article_id=article._id) }}">
+              <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% include "admin/components/footer.html" %}
+
+{# ──────────────────────────────────────────────────────────────────────────── #}
+{#                       JavaScript helpers untuk contenteditable              #}
+{# ──────────────────────────────────────────────────────────────────────────── #}
+<script>
+  // Sinkronisasi konten Rich‐Text Add Article
+  function syncAddContent() {
+    const html = document.getElementById("addContentEditable").innerHTML;
+    document.getElementById("addContentInput").value = html;
+  }
+
+  // Sinkronisasi konten Rich‐Text Edit Article (per ID)
+  function syncEditContent(articleId) {
+    const editableDiv = document.getElementById("editContentEditable-" + articleId);
+    const hiddenTextarea = document.getElementById("editContentInput-" + articleId);
+    hiddenTextarea.value = editableDiv.innerHTML;
+  }
+
+  // Eksekusi perintah Rich‐Text untuk elemen contenteditable tertentu
+  function execCommandForId(command, editableDivId, value = null) {
+    const editableDiv = document.getElementById(editableDivId);
+    editableDiv.focus();
+    if (value !== null) {
+      document.execCommand(command, false, value);
+    } else {
+      document.execCommand(command, false, null);
+    }
+  }
+</script>

@@ -1,0 +1,461 @@
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+      <h4 class="page-title mb-0">Manajemen Tentang Sekolah</h4>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Beranda</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Tentang</li>
+        </ol>
+      </nav>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Tabs Navigasi -->
+    <ul class="nav nav-tabs mb-4" id="aboutTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="about-tab" data-bs-toggle="tab" data-bs-target="#about"
+          type="button" role="tab" aria-controls="about" aria-selected="false">
+          <i class="ti ti-info-circle me-1"></i> Tentang Sekolah
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings"
+          type="button" role="tab" aria-controls="settings" aria-selected="true">
+          <i class="ti ti-settings me-1"></i> Pengaturan Sekolah
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="aboutTabContent">
+      <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Pengaturan Sekolah</h5>
+          </div>
+          <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+              <input type="hidden" name="form_type" value="school">
+
+              <div class="mb-5 mx-auto" style="max-width: 400px;">
+                <label class="form-label">Nama Sekolah</label>
+                <input type="text" name="school_name" class="form-control" value="{{ settings.school_name or '' }}" required>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label">Tagline Sekolah</label>
+                <input type="text"
+                      name="school_tagline"
+                      class="form-control"
+                      value="{{ settings.school_tagline or '' }}"
+                      placeholder="Contoh: Sekolah Tempat Belajar, Berpikir, dan Berkembang">
+              </div>
+
+
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <div class="card border border-dark">
+                    <div class="card-body">
+                      <label class="form-label">Logo Sekolah</label>
+                      {% if settings.school_logo %}
+                      <div class="mb-2 text-center">
+                        <img src="{{ url_for('static', filename='images/logos/' + settings.school_logo) }}"
+                            class="img-fluid rounded"
+                            style="max-height: 80px;">
+                      </div>
+                      {% endif %}
+                      <input type="file" name="school_logo" class="form-control" accept=".png,.jpg,.jpeg,.gif">
+                      <div class="form-text">Ukuran yang disarankan: 225 x 225 piksel.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <div class="card border border-dark">
+                    <div class="card-body">
+                      <label class="form-label">Gambar Banner Utama</label>
+                      {% if settings.main_banner_image %}
+                      <div class="mb-2 text-center">
+                        <img src="{{ url_for('static', filename='images/main_headers/' + settings.main_banner_image) }}"
+                            class="img-fluid rounded"
+                            style="max-height: 100px;">
+                      </div>
+                      {% endif %}
+                      <input type="file" name="main_banner_image" class="form-control" accept=".png,.jpg,.jpeg,.gif">
+                      <div class="form-text">Ukuran yang disarankan: 500 x 500 piksel.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <div class="card border border-dark">
+                    <div class="card-body">
+                      <label class="form-label">Gambar Banner</label>
+                      {% if settings.header_image %}
+                      <div class="mb-2 text-center">
+                        <img src="{{ url_for('static', filename='images/headers/' + settings.header_image) }}"
+                            class="img-fluid rounded"
+                            style="max-height: 100px;">
+                      </div>
+                      {% endif %}
+                      <input type="file" name="header_image" class="form-control" accept=".png,.jpg,.jpeg,.gif">
+                      <div class="form-text">Ukuran yang disarankan: 1280 x 430 piksel.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-end">
+                <button class="btn btn-success"><i class="ti ti-device-floppy"></i> Simpan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Sambutan Kepala Sekolah</h5>
+          </div>
+          <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+              <input type="hidden" name="form_type" value="headmaster">
+
+              <!-- Foto + Upload Sejajar -->
+              <div class="mb-3">
+                <label class="form-label">Foto Kepala Sekolah</label>
+                <div class="d-flex align-items-center gap-4">
+                  {% if settings.headmaster_photo %}
+                    <img src="{{ url_for('static', filename='images/avatars/' + settings.headmaster_photo) }}"
+                        alt="Foto Kepala Sekolah"
+                        class="img-thumbnail"
+                        style="max-width: 150px;">
+                  {% endif %}
+                  <input type="file"
+                        name="headmaster_photo"
+                        class="form-control"
+                        accept=".png,.jpg,.jpeg,.gif"
+                        style="max-width: 300px;">
+                </div>
+              </div>
+
+              <!-- Foto + Nama + Upload -->
+              <div style="max-width: 500px;">
+
+                <div class="mb-3">
+                  <label class="form-label">Nama Kepala Sekolah</label>
+                  <input type="text" name="headmaster_name" class="form-control"
+                        value="{{ settings.headmaster_name or '' }}" required>
+                </div>
+
+              </div>
+
+              <!-- Sambutan -->
+              <div class="mb-3">
+                <label class="form-label"><strong>Sambutan Kepala Sekolah</strong></label>
+
+                <!-- Toolbar Sambutan -->
+                <div class="btn-toolbar mb-2" role="toolbar">
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','headmasterContentEditable')" title="Bold"><i class="ti ti-bold"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','headmasterContentEditable')" title="Italic"><i class="ti ti-italic"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','headmasterContentEditable')" title="Underline"><i class="ti ti-underline"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','headmasterContentEditable')" title="Strikethrough"><i class="ti ti-strikethrough"></i></button>
+                  </div>
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','headmasterContentEditable')" title="Align Left"><i class="ti ti-align-left"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','headmasterContentEditable')" title="Align Center"><i class="ti ti-align-center"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','headmasterContentEditable')" title="Align Right"><i class="ti ti-align-right"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','headmasterContentEditable')" title="Justify"><i class="ti ti-align-justified"></i></button>
+                  </div>
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertUnorderedList','headmasterContentEditable')" title="Bullet List"><i class="ti ti-list"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertOrderedList','headmasterContentEditable')" title="Numbered List"><i class="ti ti-list-numbers"></i></button>
+                  </div>
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('createLink','headmasterContentEditable', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertImage','headmasterContentEditable', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+                  </div>
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','headmasterContentEditable','1')" title="Font Size Small"><small>A</small></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','headmasterContentEditable','3')" title="Font Size Normal">A</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','headmasterContentEditable','5')" title="Font Size Large"><strong>A</strong></button>
+                  </div>
+                </div>
+
+                <!-- Editor -->
+                <div id="headmasterContentEditable"
+                    contenteditable="true"
+                    class="form-control border rounded p-2"
+                    style="min-height: 180px; background-color: #fff; overflow-y: auto;">
+                  {{ settings.headmaster_message|safe if settings.headmaster_message else '' }}
+                </div>
+
+                <!-- Hidden textarea -->
+                <textarea name="headmaster_message" id="headmasterContentInput" hidden></textarea>
+              </div>
+
+
+              <div class="text-end">
+                <button class="btn btn-primary" onclick="syncHeadmasterMessage();"><i class="ti ti-device-floppy"></i> Simpan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <form method="POST" action="{{ url_for('admin_about') }}" enctype="multipart/form-data">
+
+            <div class="mb-3">
+              <label class="form-label"><strong>Deskripsi Sekolah</strong></label>
+
+                <!-- Toolbar Deskripsi -->
+                <div class="btn-toolbar mb-2" role="toolbar">
+                  <!-- Bold, Italic, Underline, Strikethrough -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','aboutContentEditable')" title="Bold"><i class="ti ti-bold"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','aboutContentEditable')" title="Italic"><i class="ti ti-italic"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','aboutContentEditable')" title="Underline"><i class="ti ti-underline"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','aboutContentEditable')" title="Strikethrough"><i class="ti ti-strikethrough"></i></button>
+                  </div>
+                  <!-- Alignment -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','aboutContentEditable')" title="Align Left"><i class="ti ti-align-left"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','aboutContentEditable')" title="Align Center"><i class="ti ti-align-center"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','aboutContentEditable')" title="Align Right"><i class="ti ti-align-right"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','aboutContentEditable')" title="Justify"><i class="ti ti-align-justified"></i></button>
+                  </div>
+                  <!-- List -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertUnorderedList','aboutContentEditable')" title="Bullet List"><i class="ti ti-list"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertOrderedList','aboutContentEditable')" title="Numbered List"><i class="ti ti-list-numbers"></i></button>
+                  </div>
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('createLink','aboutContentEditable', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertImage','aboutContentEditable', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+                  </div>
+                  <!-- Font size -->
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','aboutContentEditable','1')" title="Font Size Small"><small>A</small></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','aboutContentEditable','3')" title="Font Size Normal">A</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','aboutContentEditable','5')" title="Font Size Large"><strong>A</strong></button>
+                  </div>
+                </div>
+
+              <!-- Editor -->
+              <div id="aboutContentEditable"
+                  contenteditable="true"
+                  class="form-control border rounded p-2"
+                  style="min-height: 200px; background-color: #fff; overflow-y: auto;">
+                {{ about.description|safe if about else '' }}
+              </div>
+
+              <!-- Hidden textarea -->
+              <textarea name="description" id="aboutContentInput" hidden></textarea>
+            </div>
+
+              <!-- Gambar Deskripsi Sekolah -->
+              <div class="mb-3">
+                <label class="form-label"><strong>Gambar Deskripsi Sekolah</strong></label>
+                <div class="row align-items-center">
+                  <!-- Preview gambar -->
+                  <div class="col-md-4">
+                    {% if about and about.description_image %}
+                      <img src="{{ url_for('static', filename='images/about/' ~ about.description_image) }}"
+                          alt="Deskripsi Sekolah"
+                          class="img-thumbnail"
+                          style="max-width: 100%;">
+                    {% else %}
+                      <div class="text-muted fst-italic">Belum ada gambar.</div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Input file -->
+                  <div class="col-md-8 mt-3 mt-md-0">
+                    <input type="file" name="description_image" accept="image/*"
+                          class="form-control" style="max-width: 300px;">
+                  </div>
+                </div>
+              </div>
+
+
+              <hr class="my-4">
+
+              <div class="mb-3">
+                <label class="form-label"><strong>Visi</strong></label>
+
+                <!-- Toolbar Visi -->
+                <div class="btn-toolbar mb-2" role="toolbar">
+                  <!-- Bold, Italic, Underline, Strikethrough -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','visionContentEditable')" title="Bold"><i class="ti ti-bold"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','visionContentEditable')" title="Italic"><i class="ti ti-italic"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','visionContentEditable')" title="Underline"><i class="ti ti-underline"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','visionContentEditable')" title="Strikethrough"><i class="ti ti-strikethrough"></i></button>
+                  </div>
+                  <!-- Alignment -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','visionContentEditable')" title="Align Left"><i class="ti ti-align-left"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','visionContentEditable')" title="Align Center"><i class="ti ti-align-center"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','visionContentEditable')" title="Align Right"><i class="ti ti-align-right"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','visionContentEditable')" title="Justify"><i class="ti ti-align-justified"></i></button>
+                  </div>
+                  <!-- List -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertUnorderedList','visionContentEditable')" title="Bullet List"><i class="ti ti-list"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertOrderedList','visionContentEditable')" title="Numbered List"><i class="ti ti-list-numbers"></i></button>
+                  </div>
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('createLink','visionContentEditable', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertImage','visionContentEditable', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+                  </div>
+                  <!-- Font size -->
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','visionContentEditable','1')" title="Font Size Small"><small>A</small></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','visionContentEditable','3')" title="Font Size Normal">A</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','visionContentEditable','5')" title="Font Size Large"><strong>A</strong></button>
+                  </div>
+                </div>
+
+                <!-- Editor -->
+                <div id="visionContentEditable"
+                    contenteditable="true"
+                    class="form-control border rounded p-2"
+                    style="min-height: 150px; background-color: #fff; overflow-y: auto;">
+                  {% if about and about.vision %}
+                    {{ '<br>'.join(about.vision)|safe }}
+                  {% endif %}
+                </div>
+
+                <!-- Hidden textarea -->
+                <textarea name="vision" id="visionContentInput" hidden></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label"><strong>Misi</strong></label>
+
+                <!-- Toolbar Visi -->
+                <div class="btn-toolbar mb-2" role="toolbar">
+                  <!-- Bold, Italic, Underline, Strikethrough -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','missionContentEditable')" title="Bold"><i class="ti ti-bold"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','missionContentEditable')" title="Italic"><i class="ti ti-italic"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','missionContentEditable')" title="Underline"><i class="ti ti-underline"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','missionContentEditable')" title="Strikethrough"><i class="ti ti-strikethrough"></i></button>
+                  </div>
+                  <!-- Alignment -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','missionContentEditable')" title="Align Left"><i class="ti ti-align-left"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','missionContentEditable')" title="Align Center"><i class="ti ti-align-center"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','missionContentEditable')" title="Align Right"><i class="ti ti-align-right"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','missionContentEditable')" title="Justify"><i class="ti ti-align-justified"></i></button>
+                  </div>
+                  <!-- List -->
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertUnorderedList','missionContentEditable')" title="Bullet List"><i class="ti ti-list"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertOrderedList','missionContentEditable')" title="Numbered List"><i class="ti ti-list-numbers"></i></button>
+                  </div>
+                  <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('createLink','missionContentEditable', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertImage','missionContentEditable', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+                  </div>
+                  <!-- Font size -->
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','missionContentEditable','1')" title="Font Size Small"><small>A</small></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','missionContentEditable','3')" title="Font Size Normal">A</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','missionContentEditable','5')" title="Font Size Large"><strong>A</strong></button>
+                  </div>
+                </div>
+
+                <!-- Editor -->
+                <div id="missionContentEditable"
+                    contenteditable="true"
+                    class="form-control border rounded p-2"
+                    style="min-height: 150px; background-color: #fff; overflow-y: auto;">
+                  {% if about and about.mission %}
+                    {{ '<br>'.join(about.mission)|safe }}
+                  {% endif %}
+                </div>
+
+                <!-- Hidden textarea -->
+                <textarea name="mission" id="missionContentInput" hidden></textarea>
+              </div>
+
+              <div class="text-end">
+                <button type="submit" class="btn btn-primary" onclick="syncAboutContent(); syncVisionMission();"><i class="ti ti-device-floppy"></i> Simpan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function syncHeadmasterMessage() {
+    const html = document.getElementById("headmasterContentEditable").innerHTML;
+    document.getElementById("headmasterContentInput").value = html;
+  }
+
+  function syncAboutContent() {
+    const html = document.getElementById("aboutContentEditable").innerHTML;
+    document.getElementById("aboutContentInput").value = html;
+  }
+
+  function syncVisionMission() {
+    document.getElementById("visionContentInput").value = document.getElementById("visionContentEditable").innerHTML;
+    document.getElementById("missionContentInput").value = document.getElementById("missionContentEditable").innerHTML;
+  }
+
+  function execCommandForId(command, editableDivId, value = null) {
+    const editableDiv = document.getElementById(editableDivId);
+    editableDiv.focus();
+    if (value !== null) {
+      document.execCommand(command, false, value);
+    } else {
+      document.execCommand(command, false, null);
+    }
+  }
+</script>
+
+<!-- SCRIPT: Tab Persist via localStorage -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Aktifkan tab terakhir yang dikunjungi
+    const lastTab = localStorage.getItem("activeTab");
+    if (lastTab) {
+      const tabTrigger = document.querySelector(`button[data-bs-target="${lastTab}"]`);
+      if (tabTrigger) {
+        const tab = new bootstrap.Tab(tabTrigger);
+        tab.show();
+      }
+    }
+
+    // Simpan tab yang diklik ke localStorage
+    const tabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+      button.addEventListener("shown.bs.tab", function (e) {
+        localStorage.setItem("activeTab", e.target.getAttribute("data-bs-target"));
+      });
+    });
+  });
+</script>
+
+{% include "admin/components/footer.html" %}

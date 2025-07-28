@@ -1,0 +1,132 @@
+<!-- [ Sidebar Menu ] start -->
+<nav class="pc-sidebar">
+  <div class="navbar-wrapper">
+    <div class="m-header">
+
+      <a href="{{ url_for('dashboard') }}" class="b-brand text-primary">
+        <!-- ========   Change your logo from here   ============ -->
+        <img 
+          src="{{ url_for('static', filename='images/logos/' + (settings.school_logo or 'logo_smpn_1_jatiroto.png')) }}"
+          alt="{{ settings.school_name or 'SMP NEGERI 1 JATIROTO' }} Logo"
+          style="height: 60px;"
+        >
+      </a>
+
+    </div>
+    <div class="navbar-content">
+      <ul class="pc-navbar">
+
+        <!-- Dashboard -->
+        <li class="pc-item">
+          <a href="{{ url_for('dashboard') }}" class="pc-link">
+            <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+            <span class="pc-mtext">Beranda</span>
+          </a>
+        </li>
+
+        <!-- School Info Group -->
+        <li class="pc-item pc-hasmenu">
+          <a href="#!" class="pc-link">
+            <span class="pc-micon"><i class="ti ti-building"></i></span>
+            <span class="pc-mtext">Informasi Sekolah</span>
+            <span class="pc-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="pc-submenu">
+            <li class="pc-item">
+              <a href="{{ url_for('admin_about') }}" class="pc-link">
+                <span class="pc-mtext">Tentang Sekolah</span>
+              </a>
+            </li>
+            <li class="pc-item">
+              <a href="{{ url_for('admin_teachers') }}" class="pc-link">
+                <span class="pc-mtext">Guru & Staf</span>
+              </a>
+            </li>
+            <li class="pc-item">
+              <a href="{{ url_for('admin_contact') }}" class="pc-link">
+                <span class="pc-mtext">Kontak</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Academic Group -->
+        <li class="pc-item pc-hasmenu">
+          <a href="#!" class="pc-link">
+            <span class="pc-micon"><i class="ti ti-book"></i></span>
+            <span class="pc-mtext">Akademik</span>
+            <span class="pc-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="pc-submenu">
+            <li class="pc-item">
+              <a href="{{ url_for('admin_materials') }}" class="pc-link {% if active_page=='admin_materials' %}active{% endif %}">
+                <span class="pc-mtext">E-Learning</span>
+              </a>
+            </li>
+            <li class="pc-item">
+              <a href="{{ url_for('admin_extracurricular') }}" class="pc-link">
+                <span class="pc-mtext">Ekstrakurikuler</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Media & Information Group -->
+        <li class="pc-item pc-hasmenu">
+          <a href="#!" class="pc-link">
+            <span class="pc-micon"><i class="ti ti-info-circle"></i></span>
+            <span class="pc-mtext">Media & Informasi</span>
+            <span class="pc-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="pc-submenu">
+            <li class="pc-item">
+              <a href="{{ url_for('admin_news_articles') }}" class="pc-link">
+                <span class="pc-mtext">Publikasi</span>
+              </a>
+            </li>
+            <li class="pc-item">
+              <a href="{{ url_for('admin_gallery') }}" class="pc-link">
+                <span class="pc-mtext">Galeri</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- System Group -->
+        <li class="pc-item pc-hasmenu">
+          <a href="#!" class="pc-link">
+            <span class="pc-micon"><i class="ti ti-settings"></i></span>
+            <span class="pc-mtext">Sistem</span>
+            <span class="pc-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="pc-submenu">
+            <li class="pc-item">
+              <a href="{{ url_for('admin_settings') }}" class="pc-link">
+                <span class="pc-mtext">Pengaturan</span>
+              </a>
+            </li>
+            {% if session.get('admin_role') == 'superadmin' %}
+            <li class="pc-item">
+              <a href="{{ url_for('admin_list') }}" class="pc-link">
+                <span class="pc-mtext">Manajemen Admin</span>
+              </a>
+            </li>
+            {% endif %}
+            <li class="pc-item">
+              <a href="{{ url_for('admin_logs') }}" class="pc-link {% if active_page == 'admin_logs' %}active{% endif %}">
+                <span class="pc-mtext">Log Aktivitas</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+
+      </ul>
+
+      <div class="w-100 text-center">
+        <div class="badge theme-version badge rounded-pill bg-light text-dark f-12"></div>
+      </div>
+    </div>
+    
+  </div>
+</nav>
+<!-- [ Sidebar Menu ] end -->

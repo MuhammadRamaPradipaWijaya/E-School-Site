@@ -1,0 +1,125 @@
+{% include "user/components/header.html" %}
+{% include "user/components/navbar.html" %}
+
+<style>
+.tagline-header {
+    font-size: 3rem; /* Ukuran tetap */
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    .tagline-header {
+        font-size: 2rem;
+    }
+}
+</style>
+
+    <!-- Header Start -->
+    <div class="container-fluid bg-primary px-0 px-md-5 mb-5">
+        <div class="row align-items-center px-3">
+            <div class="col-lg-6 text-center text-lg-left">
+                <h4 class="text-white mb-4 mt-5 mt-lg-0">{{ settings.school_name or 'SMP NEGERI 1 JATIROTO' }}</h4>
+                <h1 class="display-3 font-weight-bold text-white tagline-header">
+                    {{ settings.school_tagline }}
+                </h1>
+            </div>
+            <div class="col-lg-5 text-center text-lg-right">
+                {% if settings.main_banner_image %}
+                <img src="{{ url_for('static', filename='images/main_headers/' + settings.main_banner_image) }}"
+                    style="width: 400px; height: 400px; object-fit: cover;" class="mb-4">
+                {% else %}
+                <div class="text-muted fst-italic">Belum ada gambar.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Header End -->
+
+
+    <!-- About Start -->
+    <div class="container-fluid py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-5">
+                {% if about and about.description_image %}
+                  <img src="{{ url_for('static', filename='images/about/' ~ about.description_image) }}"
+                      alt="Deskripsi Sekolah"
+                      class="img-thumbnail"
+                      style="max-width: 100%;">
+                {% else %}
+                  <div class="text-muted fst-italic">Belum ada gambar.</div>
+                {% endif %}
+                </div>
+                <div class="col-lg-7">
+                    <p class="section-title pr-5"><span class="pr-2">Tentang Sekolah</span></p>
+                    <h1 class="mb-4">SMP NEGERI 1 LUMAJANG</h1>
+                    <p style="text-align: justify;">{{ about.description|safe or 'Description not set' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- About End -->
+
+    <!-- Blog Start -->
+    <div class="container-fluid pt-5">
+        <div class="container">
+            <div class="text-center pb-2">
+                <p class="section-title px-5"><span class="px-2">Informasi Terbaru</span></p>
+                <h1 class="mb-4">Postingan Terbaru dari Informasi</h1>
+            </div>
+            <div class="row pb-3">
+                {% if publications %}
+                    {% for pub in publications %}
+                    <div class="col-lg-4 mb-4">
+                        <div class="card border-0 shadow-sm mb-2">
+                            {% if pub.feature_image %}
+                                <img class="card-img-top mb-2"
+                                    src="{{ url_for('static', filename='images/publications/' + pub.feature_image) }}"
+                                    alt="{{ pub.title }}"
+                                    style="width: 100%; height: 200px; object-fit: cover;">
+                            {% else %}
+                                <img class="card-img-top mb-2"
+                                    src="/static/user/img/blog-1.jpg"
+                                    alt="Default"
+                                    style="width: 100%; height: 200px; object-fit: cover;">
+                            {% endif %}
+
+                            <div class="card-body bg-light text-center p-4">
+                                {% set truncated_title = pub.title[:45] + ('...' if pub.title|length > 45 else '') %}
+                                <h4 style="text-align: justify;">{{ truncated_title }}</h4>
+                                <div class="d-flex justify-content-center mb-3">
+                                    <small class="mr-3">
+                                    <i class="fa fa-folder text-primary"></i>
+                                    {% if pub.category == 'News' %}
+                                        Berita
+                                    {% elif pub.category == 'Event' %}
+                                        Acara
+                                    {% elif pub.category == 'Announcement' %}
+                                        Pengumuman
+                                    {% elif pub.category == 'Achievement' %}
+                                        Prestasi
+                                    {% endif %}
+                                    </small>
+                                    <small class="mr-3"><i class="fa fa-calendar text-primary"></i> {{ pub.created_at.strftime('%d %b %Y %H:%M') }}</small>
+                                </div>
+                                {% set clean = pub.content | striptags %}
+                                {% set truncated_content = clean[:140] + ('...' if clean|length > 140 else '') %}
+                                <p style="text-align: left;">{{ truncated_content }}...</p>
+                                <a href="{{ url_for('single', article_id=pub._id) }}" class="btn btn-primary px-4 mx-auto my-2">Baca Selengkapnya</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">No publications available.</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Blog End -->
+
+
+    {% include "user/components/footer.html" %}

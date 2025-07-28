@@ -1,0 +1,60 @@
+{# templates/user/subjects.html #}
+{% include "user/components/header.html" %}
+{% include "user/components/navbar.html" %}
+
+{# ---------- Hero Header ---------- #}
+<div class="container-fluid mb-5 p-0"
+     style="background-image: url('{{ url_for('static', filename='images/headers/' ~ settings.header_image) }}'); background-size: cover; background-position: center;">
+    <div class="d-flex flex-column align-items-center justify-content-center"
+         style="height: 400px; background-color: rgba(0, 0, 0, 0.5);">
+        {# judul = nama kelas #}
+        <h3 class="display-3 font-weight-bold text-white">{{ class_data.title }}</h3>
+        <div class="d-inline-flex text-white">
+            <p class="m-0"><a class="text-white" href="{{ url_for('home') }}">Beranda</a></p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">
+              <a class="text-white" href="{{ url_for('materials_classes') }}">E-Learning</a>
+            </p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">{{ class_data.title }}</p>
+        </div>
+    </div>
+</div>
+{# ---------- /Hero Header ---------- #}
+
+
+<!-- Subjects Start -->
+<div class="container py-5">
+    
+    <div class="text-center pb-5">
+        <p class="section-title px-5"><span class="px-2">Mapel</span></p>
+        <h1 class="mb-4">Mapel dari {{ class_data.title }}</h1>
+        {% if class_data.description %}
+        <p class="text-muted" style="text-align: justify;">{{ class_data.description|safe }}</p>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% for sub in subjects %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                {% if sub.image %}
+                <img src="{{ url_for('static', filename='images/subjects/' + sub.image) }}" class="card-img-top" alt="{{ sub.title }}">
+                {% else %}
+                <img src="/static/user/img/class-default.jpg" class="card-img-top" alt="{{ sub.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title" style="text-align: justify;">{{ sub.title }}</h5>
+                    <a href="{{ url_for('materials', subject_id=sub._id) }}"
+                        class="btn btn-primary px-4 mx-auto mb-4">
+                        Baca Selengkapnya
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<!-- Subjects End -->
+
+{% include "user/components/footer.html" %}

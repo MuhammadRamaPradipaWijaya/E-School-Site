@@ -1,0 +1,359 @@
+{% include "admin/components/header.html" %}
+{% include "admin/components/sidebar.html" %}
+{% include "admin/components/topbar.html" %}
+
+<div class="pc-container">
+  <div class="pc-content">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+      <h4 class="page-title mb-0">Manajemen Ekstrakurikuler</h4>
+
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExtracurricularModal">
+        <i class="ti ti-plus me-1"></i> Tambah Ekstrakurikuler
+      </button>
+
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Beranda</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Ekstrakurikuler</li>
+        </ol>
+      </nav>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <form method="get" class="mb-3 d-flex justify-content-end">
+            <input type="text" name="search" class="form-control w-auto me-2" placeholder="Cari Judul..." value="{{ search_query }}">
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="ti ti-search"></i> Cari
+            </button>
+          </form>
+          <table class="table table-bordered align-middle" id="extracurricularTable">
+            <thead class="table-light">
+              <tr>
+                <th>No.</th>
+                <th>Gambar</th>
+                <th>Nama</th>
+                <th>Deskripsi</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if extracurriculars %}
+                {% for item in extracurriculars %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                      {% if item.image %}
+                        <img src="{{ url_for('static', filename='images/extracurricular/' + item.image) }}" style="width: 80px; height: 80px; object-fit: cover;">
+                      {% else %}<em>Tidak Ada Gambar</em>{% endif %}
+                    </td>
+                    <td>{{ item.name }}</td>
+                    <td><div class="text-truncate" style="max-width: 500px;">{{ item.description|safe }}</div></td>
+                    <td>
+                      <button class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ item._id }}"><i class="ti ti-eye"></i></button>
+                      <button class="btn btn-sm btn-warning me-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ item._id }}"><i class="ti ti-edit"></i></button>
+                      <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ item._id }}"><i class="ti ti-trash"></i></button>
+                    </td>
+                  </tr>
+
+                  <!-- View Modal -->
+                  <div class="modal fade" id="viewModal-{{ item._id }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Detail Ekstrakurikuler</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <p><strong>Nama:</strong> {{ item.name }}</p>
+                          <p><strong>Deskripsi:</strong> {{ item.description|safe }}</p>
+                          {% if item.image %}
+                          <label class="form-label">Gambar Ekstrakurikuler</label>
+                          <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                              {{ item.image }}
+                              <button type="button" class="btn btn-sm btn-outline-primary"
+                                      data-bs-toggle="collapse"
+                                      data-bs-target="#viewExtraImage-{{ item._id }}">
+                                <i class="fa fa-image me-1"></i> Lihat Gambar
+                              </button>
+                            </li>
+                            <div class="collapse mb-3" id="viewExtraImage-{{ item._id }}">
+                              <img src="{{ url_for('static', filename='images/extracurricular/' + item.image) }}"
+                                  class="img-fluid rounded border w-100">
+                            </div>
+                          </ul>
+                          {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Edit Modal -->
+                  <div class="modal fade" id="editModal-{{ item._id }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Edit Ekstrakurikuler</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST" action="{{ url_for('edit_extracurricular', id=item._id) }}" enctype="multipart/form-data">
+                          <div class="modal-body">
+                            <div class="mb-3">
+                              <label class="form-label">Nama</label>
+                              <input type="text" class="form-control" name="name" value="{{ item.name }}" required>
+                            </div>
+
+                            <div class="mb-3">
+                              <label class="form-label">Deskripsi</label>
+
+                              <!-- Toolbar -->
+                              <div class="btn-toolbar mb-2" role="toolbar">
+                                <div class="btn-group me-1">
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','bold')"><i class="ti ti-bold"></i></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','italic')"><i class="ti ti-italic"></i></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','underline')"><i class="ti ti-underline"></i></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','strikeThrough')"><i class="ti ti-strikethrough"></i></button>
+                                </div>
+                                <div class="btn-group me-1">
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','justifyLeft')"><i class="ti ti-align-left"></i></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','justifyCenter')"><i class="ti ti-align-center"></i></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','justifyRight')"><i class="ti ti-align-right"></i></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','justifyFull')"><i class="ti ti-align-justified"></i></button>
+                                </div>
+                                <div class="btn-group me-1">
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','insertUnorderedList')"><i class="ti ti-list"></i></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','insertOrderedList')"><i class="ti ti-list-numbers"></i></button>
+                                </div>
+                                <div class="btn-group me-1">
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','createLink', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','insertImage', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+                                </div>
+                                <div class="btn-group">
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','fontSize','1')"><small>A</small></button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','fontSize','3')">A</button>
+                                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('editExtracurricularContentEditable-{{ item._id }}','fontSize','5')"><strong>A</strong></button>
+                                </div>
+                              </div>
+
+                              <div id="editExtracurricularContentEditable-{{ item._id }}"
+                                  contenteditable="true"
+                                  class="form-control border rounded p-2"
+                                  style="min-height: 150px; background-color: #fff; overflow-y: auto;">
+                                {{ item.description|safe }}
+                              </div>
+                              <textarea name="description" id="editExtracurricularContentInput-{{ item._id }}" hidden></textarea>
+                            </div>
+
+                            {% if item.image %}
+                            <label class="form-label">Gambar Saat Ini</label>
+                            <ul class="list-group mb-3">
+                              <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ item.image }}
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#editExtraImageCollapse-{{ item._id }}">
+                                  <i class="fa fa-image me-1"></i> Lihat Gambar
+                                </button>
+                              </li>
+                              <div class="collapse mt-2" id="editExtraImageCollapse-{{ item._id }}">
+                                <img src="{{ url_for('static', filename='images/extracurricular/' + item.image) }}"
+                                    class="img-fluid rounded border w-100">
+                              </div>
+                            </ul>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                              <label class="form-label">Ganti Gambar</label>
+                              <input class="form-control" type="file" name="image" accept="image/*">
+                              <div class="form-text">Biarkan kosong jika tidak ingin mengganti gambar.</div>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary" onclick="syncEditExtracurricularContent('{{ item._id }}')">Simpan</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade" id="deleteModal-{{ item._id }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title text-danger">Hapus Ekstrakurikuler</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          Apakah Anda yakin ingin menghapus <strong>{{ item.name }}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                          <form method="POST" action="{{ url_for('delete_extracurricular', id=item._id) }}">
+                            <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="5" class="text-center">Tidak ada data ekstrakurikuler yang tersedia.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+          
+          <!-- Pagination -->
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+              {% if page > 1 %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('admin_extracurricular', page=page-1, search=search) }}">&laquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&laquo;</span>
+                </li>
+              {% endif %}
+
+              {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                  <a class="page-link" href="{{ url_for('admin_extracurricular', page=p, search=search) }}">{{ p }}</a>
+                </li>
+              {% endfor %}
+
+              {% if page < total_pages %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('admin_extracurricular', page=page+1, search=search) }}">&raquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">&raquo;</span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addExtracurricularModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tambah Ekstrakurikuler</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('add_extracurricular') }}" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nama</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Deskripsi</label>
+
+            <!-- Toolbar Lengkap -->
+            <div class="btn-toolbar mb-2" role="toolbar">
+              <div class="btn-group me-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('bold','addExtracurricularContentEditable')"><i class="ti ti-bold"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('italic','addExtracurricularContentEditable')"><i class="ti ti-italic"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('underline','addExtracurricularContentEditable')"><i class="ti ti-underline"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('strikeThrough','addExtracurricularContentEditable')"><i class="ti ti-strikethrough"></i></button>
+              </div>
+              <div class="btn-group me-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyLeft','addExtracurricularContentEditable')"><i class="ti ti-align-left"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyCenter','addExtracurricularContentEditable')"><i class="ti ti-align-center"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyRight','addExtracurricularContentEditable')"><i class="ti ti-align-right"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('justifyFull','addExtracurricularContentEditable')"><i class="ti ti-align-justified"></i></button>
+              </div>
+              <div class="btn-group me-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertUnorderedList','addExtracurricularContentEditable')"><i class="ti ti-list"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertOrderedList','addExtracurricularContentEditable')"><i class="ti ti-list-numbers"></i></button>
+              </div>
+              <div class="btn-group me-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('createLink','addExtracurricularContentEditable', prompt('Enter URL:','http://'))"><i class="ti ti-link"></i></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('insertImage','addExtracurricularContentEditable', prompt('Enter image URL:','http://'))"><i class="ti ti-unlink"></i></button>
+              </div>
+              <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addExtracurricularContentEditable','1')"><small>A</small></button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addExtracurricularContentEditable','3')">A</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="execCommandForId('fontSize','addExtracurricularContentEditable','5')"><strong>A</strong></button>
+              </div>
+            </div>
+
+            <!-- Editor -->
+            <div id="addExtracurricularContentEditable"
+                contenteditable="true"
+                class="form-control border rounded p-2"
+                style="min-height: 150px; background-color: #fff; overflow-y: auto;"></div>
+
+            <!-- Hidden textarea -->
+            <textarea name="description" id="addExtracurricularContentInput" hidden></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Gambar</label>
+            <input class="form-control" type="file" name="image" accept="image/*">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary" onclick="syncAddExtracurricularContent()">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Untuk sinkronisasi konten Tambah
+  function syncAddExtracurricularContent() {
+    const html = document.getElementById("addExtracurricularContentEditable").innerHTML;
+    document.getElementById("addExtracurricularContentInput").value = html;
+  }
+
+  // Untuk sinkronisasi konten Edit per ID
+  function syncEditExtracurricularContent(id) {
+    const editableDiv = document.getElementById("editExtracurricularContentEditable-" + id);
+    const hiddenTextarea = document.getElementById("editExtracurricularContentInput-" + id);
+    hiddenTextarea.value = editableDiv.innerHTML;
+  }
+
+  // Fungsi eksekusi rich-text universal
+  function execCommandForId(editableDivId, command, value = null) {
+    const editableDiv = document.getElementById(editableDivId);
+    editableDiv.focus();
+    if (value !== null) {
+      document.execCommand(command, false, value);
+    } else {
+      document.execCommand(command, false, null);
+    }
+  }
+</script>
+
+{% include "admin/components/footer.html" %}

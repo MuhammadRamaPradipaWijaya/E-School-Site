@@ -1,0 +1,97 @@
+{% include "user/components/header.html" %}
+{% include "user/components/navbar.html" %}
+
+<!-- Header Start -->
+<div class="container-fluid mb-5 p-0"
+     style="background-image: url('{{ url_for('static', filename='images/headers/' ~ settings.header_image) }}'); background-size: cover; background-position: center;">
+    <div class="d-flex flex-column align-items-center justify-content-center" style="height: 400px; background-color: rgba(0, 0, 0, 0.5);">
+        <h3 class="display-3 font-weight-bold text-white">Galeri</h3>
+        <div class="d-inline-flex text-white">
+            <p class="m-0"><a class="text-white" href="{{ url_for('home') }}">Beranda</a></p>
+            <p class="m-0 px-2">></p>
+            <p class="m-0">Galeri</p>
+        </div>
+    </div>
+</div>
+<!-- Header End -->
+
+<!-- Gallery Start -->
+<div class="container-fluid pt-5 pb-3">
+    <div class="container">
+        <div class="text-center pb-2">
+            <p class="section-title px-5"><span class="px-2">SMP NEGERI 1 JATIROTO</span></p>
+            <h1 class="mb-4">Galeri Sekolah</h1>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="row">
+            <div class="col-12 text-center mb-2">
+                <ul class="list-inline mb-4" id="portfolio-flters">
+                    <li class="btn btn-outline-primary m-1 active"  data-filter="*">Semua</li>
+                    <li class="btn btn-outline-primary m-1" data-filter=".News">Berita</li>
+                    <li class="btn btn-outline-primary m-1" data-filter=".Announcement">Pengumuman</li>
+                    <li class="btn btn-outline-primary m-1" data-filter=".Event">Acara</li>
+                    <li class="btn btn-outline-primary m-1" data-filter=".Achievement">Prestasi</li>
+                    <li class="btn btn-outline-primary m-1" data-filter=".Other">Lainnya</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Gallery Items -->
+        <div class="row portfolio-container">
+            {% if galleries %}
+                {% for img in galleries %}
+                    {% set category_class = img.category if img.category else 'Other' %}
+                    <div class="col-lg-4 col-md-6 mb-4 portfolio-item {{ category_class }}">
+                        <div class="position-relative overflow-hidden mb-2">
+                            {% if img.source == 'gallery' %}
+                                <img class="img-fluid w-100"
+                                     style="height: 250px; object-fit: cover;"
+                                     src="{{ url_for('static', filename='images/gallery/' + img.filename) }}"
+                                     alt="{{ img.title }}">
+                                <div class="portfolio-btn bg-primary d-flex align-items-center justify-content-center">
+                                    <a href="{{ url_for('static', filename='images/gallery/' + img.filename) }}"
+                                       data-lightbox="portfolio"
+                                       data-title="
+                                       <div style='font-size: 16px; color: white; background: transparent; text-align: left;'>
+                                           <div style='margin-bottom: 4px;'>{{ img.title }}</div>
+                                           <div style='font-size: 13px; color: #ccc;'>{{ img.uploaded_at.strftime('%d %b %Y %H:%M') }}</div>
+                                       </div>">
+                                        <i class="fa fa-plus text-white" style="font-size: 60px;"></i>
+                                    </a>
+                                </div>
+                            {% elif img.source == 'publication' %}
+                                <img class="img-fluid w-100"
+                                     style="height: 250px; object-fit: cover;"
+                                     src="{{ url_for('static', filename='images/publications/' + img.filename) }}"
+                                     alt="{{ img.title }}">
+                                <div class="portfolio-btn bg-primary d-flex align-items-center justify-content-center">
+                                    <a href="{{ url_for('static', filename='images/publications/' + img.filename) }}"
+                                       data-lightbox="portfolio"
+                                       data-title="
+                                       <div style='font-size: 16px; color: white; background: transparent;'>
+                                           <div style='display: flex; justify-content: space-between; align-items: center; gap: 1rem;'>
+                                               <span>{{ img.title }}</span>
+                                               <a href='{{ url_for('single', article_id=img._id) }}'
+                                                  style='color: #fff; border: 1px solid #fff; padding: 2px 8px; border-radius: 4px; font-size: 13px; text-decoration: none;'>Lihat</a>
+                                           </div>
+                                           <div style='font-size: 13px; color: #ccc; margin-top: 4px;'>{{ img.uploaded_at.strftime('%d %b %Y %H:%M') }}</div>
+                                       </div>">
+                                        <i class="fa fa-plus text-white" style="font-size: 60px;"></i>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center">
+                    <p class="text-muted">Belum ada gambar galeri yang tersedia.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- Gallery End -->
+
+{% include "user/components/footer.html" %}
